@@ -459,8 +459,6 @@ data %>%
   rename(`Значение` = value) %>%
   flextable() %>% 
   theme_box()
-?flextable()
-?theme_box()
 ```
 ##flextable::merge_h(), flextable::merge_v()
 ```{r}
