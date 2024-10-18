@@ -1,0 +1,485 @@
+---
+title: "Введение в автоматизацию обработки данных на R | BioStat 2024/25"
+author: "Sergey"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tibble)
+library(psych)
+library(tidyverse)
+library(stringi)
+library(flextable)
+```
+#Первые разделы курса
+```{r}
+data <- read_delim("data/raw/data_tsv.tsv")
+read_csv("data/raw/data_csv.csv", skip = 0, n_max = Inf)
+read_csv2("data/raw/data_csv2.csv", skip = 0, n_max = Inf)
+write_csv(iris, "data/raw/data_csv.csv")
+write_excel_csv(iris, "data/raw/data_csv.csv")
+write_csv2(iris, "data/raw/data_csv2.csv")
+write_excel_csv2(iris, "data/raw/data_csv2.csv")
+write_tsv(iris, "data/raw/data_tsv.tsv")
+write.xlsx(data, "data_excel.xlsx", colNames = TRUE)
+write.xlsx(data, "data_excel.xlsx", sheetName = "data", col.names = TRUE, row.names = TRUE, append = FALSE)
+write.xlsx(data, "data_excel.xlsx", sheetName = "data", col.names = TRUE, row.names = TRUE, append = FALSE)
+write.xlsx(data, "data_excel.xlsx", sheetName = "data_2", col.names = TRUE, row.names = TRUE, append = TRUE)
+write_rds(data, "data/raw/data.rds")
+mean(c(-2, 16, -3, 16, -9, 7, 31))
+mean(c(1, -1, 5, -12, -12, 3, 8, -10, 0))
+mean(c(NA, NA, NA, NA, NA, NA, 3, NA, NA), na.rm = TRUE)
+mean(c(76, 65, 71, 16, 60, 29, 71, 46, 45, 41), na.rm = TRUE)
+mean(c(-13, 19, -24, NA, 30, 64, -53, NA, 50, 31, -58, -34, -3, -34, 77))
+mean(c(-19, -9, 19, 5, -14, 0, 34, -8, 34, 24, -11, 8, 33, 12, -6))
+median(c(30, 87, 55, -71, 93, 50, 34, -51, 13, 96, -62, 53, -85), na.rm = FALSE)
+median(c(-92, -50, 54, 55, 84, 52, -55, -23, 36, -11, 22, 11, -7))
+median(c(-15, 71, 77, 36, 66, -21, -48, -8))
+median(c(-91, -33, 13, 34, 34, 75, -80, -35, -90, -72, 70, 67, -100, -94, -18))
+median(c(1, 9, NA, 88, 2, NA, 42, NA, 4, 68, NA), na.rm = TRUE)
+median(c(19, 89, 78, 38, 8, 17, 25, 60, 8, 43, 29, 6, 62, 41, 69, 97, 61, 83, 25, 24)
+
+min(c(48.11, 45.3, 58.42, 51.64, 62.07, 57.26, 49.69, 93.29, 81.18, 44.78, 55.1, 76.74, 58.08))
+max(c(48.11, 45.3, 58.42, 51.64, 62.07, 57.26, 49.69, 93.29, 81.18, 44.78, 55.1, 76.74, 58.08))
+
+min(c(68.92, 44.15, 34.2, 34.12, 37.7, 73.95, 36.9, 59.26, 31.06, 55.79, 73.92, 68.04, 53.73, 90.7, 39.66))
+max(c(68.92, 44.15, 34.2, 34.12, 37.7, 73.95, 36.9, 59.26, 31.06, 55.79, 73.92, 68.04, 53.73, 90.7, 39.66))
+
+min(c(60.22, 31.91, 72.71, 52.49, 46.21, 60.39, 60.09))
+max(c(60.22, 31.91, 72.71, 52.49, 46.21, 60.39, 60.09))
+
+min(c(90.48, 31.16, 44.4, 21.94, 84.37, 53.15, 81.15, 47.86, 63.23, 46.75, 102.73))
+
+
+quantile(c(80.94, 44.46, 46.33, 65.1, 66.42, 104.43, 53.15, 48.41, 12.88, 51.1, 43.03, 40.3, 33.71, 55.1, 22.17))
+quantile(c(26.17, 97.73, 24.81, 53.62, 87.72, 45.19, 45.7, 69.63, 36.76, 7.17))
+
+quantile(c(63.92, 35.85, 26.9, 48.92, 43.1, 66.94, 47.06, 56.54, 29.1, 58.88), probs = 0.95, na.rm = FALSE, names = TRUE, type = 7)
+quantile(c(32.05, 93.85, 85.52, 56.69, 23.69, 11.29, 51.44, 63.09, 65.65, 35.73, 60.15, 30.93, -4.2))
+
+var(c(47.44, 62.44, 20.44, 72.75, 77.86, 13.74, 28.2, 50.47, 59.19, 69.04))
+var(c(49.31, 44.47, 14.04, 44.43, 49.18, 40.73, 44.65, 41.91, 80.38, 80.09))
+var(c(57.96, 20.81, 8.92, 14.03, 61.02, 25.69, 21.22, 49.56, 25.64, 28.31))
+var(c(76.22, 65, 19.69, 29.84, 37.18, 70.93, 64.78, 61.66, 49.03, 51.56))
+var(c(92.11, 56, 47.89, 62.96, 47.41, 37.05, 73.96, 53, 52.37, 85.23))
+IQR(c(80.94, 44.46, 46.33, 65.1, 66.42, 104.43, 53.15, 48.41, 12.88, 51.1, 43.03, 40.3, 33.71, 55.1, 22.17))
+IQR(c(26.17, 97.73, 24.81, 53.62, 87.72, 45.19, 45.7, 69.63, 36.76, 7.17))
+IQR(c(63.92, 35.85, 26.9, 48.92, 43.1, 66.94, 47.06, 56.54, 29.1, 58.88))
+IQR(c(32.05, 93.85, 85.52, 56.69, 23.69, 11.29, 51.44, 63.09, 65.65, 35.73, 60.15, 30.93, -4.2))
+
+x1 <- c(47.44, 62.44, 20.44, 72.75, 77.86, 13.74, 28.2, 50.47, 59.19, 69.04)
+x2 <- c(49.31, 44.47, 14.04, 44.43, 49.18, 40.73, 44.65, 41.91, 80.38, 80.09)
+x3 <- c(57.96, 20.81, 8.92, 14.03, 61.02, 25.69, 21.22, 49.56, 25.64, 28.31)
+x4 <- c(76.22, 65, 19.69, 29.84, 37.18, 70.93, 64.78, 61.66, 49.03, 51.56)
+x5 <- c(92.11, 56, 47.89, 62.96, 47.41, 37.05, 73.96, 53, 52.37, 85.23)
+
+sd(x1)/sqrt(length(x1))
+sd(x2)/sqrt(length(x2))
+sd(x3)/sqrt(length(x3))
+sd(x4)/sqrt(length(x4))
+sd(x5)/sqrt(length(x5))
+
+data <- read_rds("data/raw/numeric_data.rds")
+library(psych)
+round(describe(data), 2)
+table(x, useNA = "always")
+data <- read_rds("data/raw/factor_data.rds")
+
+table(data$Группа, data$`Группа крови`)
+prop.table(table(data$Группа, data$`Группа крови`))
+
+data %>% 
+  select(., 'Группа', 'Рост', where(is.numeric)&contains("E1")) %>% 
+  filter(., 'Группа' == 'Группа 1') %>% 
+  slice(., 1:10) %>% 
+  mutate(., 'Рост'='Рост'/10)
+library(tibble)
+as_tibble(data)
+tibble(var = 1:10, var = var - 10000000)
+tibble(var_1 = c(1:10) - 100, var_2 = 1:100)
+tibble(`var 2` = 10:1, `var 3` = `var 1` - 10)
+tibble(var_first = 1:10, var_first = ifelse(var_first < 5, var_first + 100, var_first))
+tibble(var_first = 1:10, var_second = ifelse(var_first < 5, var_first + 100, var_first))
+tibble(`var 1` = 1:10, `var 2` = `var 1` * 100)
+data %>% view()
+str(data)
+data <- data %>% add_column(column_name = 1:100, .after = Inf)
+str(data)
+data <- data %>% 
+  add_row("Группа" = "New group", "Возраст" = 100, .before = 1)
+data <- data %>% 
+  mutate(ID = row_number())
+data %>% group_by(column_name)
+data1 <- data %>%
+  rowwise() %>% 
+  mutate('Среднее по базофилам за два визита'= mean(c(as.numeric(data$'Базофилы_E1'), as.numeric(data$'Базофилы_E2')), na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  select('Базофилы_E1', 'Базофилы_E2', 'Среднее по базофилам за два визита')
+data <- data[-1,-14]
+data <- as.numeric()
+```
+
+```{r}
+data <- read_tsv("data/raw/data_tsv.tsv")
+data %>% glimpse()
+```
+#6.4 Выбор столбцов
+##dplyr::select(), where()
+```{r}
+data %>% 
+  select('Группа крови', 'Рост')
+data %>% 
+  select(!'Группа')
+data %>% 
+  select(where(is.numeric))
+data %>% 
+  select(where(is.factor))
+data %>% 
+  select(where(is.character))
+data %>% 
+  select('Группа крови', where(is.numeric))
+data %>%
+  select('Группа', where(is.numeric)) %>% 
+  select_if(~ mean(., na.rm = TRUE) > 10)
+```
+##tidyselect::contains(), tidyselect::matches(), tidyselect::starts_with(), tidyselect::ends_with()
+```{r}
+data %>% select(contains("_E1"))
+data %>% select(matches("_E\\d{1}"))
+data %>% select(starts_with("Б"))
+data %>% select(ends_with("Б"))
+```
+##tidyselect::all_of(), tidyselect::any_of()
+```{r}
+variables <- c('Базофилы_E1', 'Эозинофилы_E1', 'Гемоглобин_E1')
+data %>% select(variables)
+data %>% select(all_of(variables))
+data %>% select(any_of(variables))
+```
+##Пересечение и объединение условий, отрицание условий
+```{r}
+data %>%
+  select(where(is.numeric)) %>% 
+  select(where(function(x) sd(x, na.rm =TRUE) >2 & mean(x, na.rm = TRUE) < 10))
+data %>%
+  select(where(is.numeric)) %>% 
+  select(where(function(x) sd(x, na.rm =TRUE) > 2 | 
+                 mean(x, na.rm = TRUE) < 10 | median(x, na.rm = TRUE) > 5))
+data %>% select(!where(is.numeric))
+```
+##tidyselect::everything()
+```{r}
+data %>% select('Пол', 'Эритроциты_E1', everything())
+```
+##Выбор с одновременным изменением имён
+```{r}
+data %>% select('Эритроциты визит 1' = 'Эритроциты_E1',
+                'Эритроциты визит 2' = 'Эритроциты_E2')
+```
+#6.5 Выбор строк
+##dplyr::slice()
+```{r}
+data %>% slice(1:10)
+data %>% slice_head(n=10)
+data %>% slice(1:10 * -1)
+data %>% slice_head(prop = 0.1)
+data %>% slice_tail(prop = 0.1)
+data %>% slice_sample(prop = 0.15)
+data %>% slice_min(Возраст)
+data %>% slice_max(Возраст)
+```
+##dplyr::filter()
+```{r}
+data %>% filter(Пол == 'Женский')
+data %>% filter(`Группа крови` %in% c("A (II)", "O (I)") & Группа != "Группа 1")
+data %>% filter(between(`Возраст`, 31, 34))
+data %>% filter(near(Эозинофилы_E1, 3.38, tol = 0.1))
+```
+##dplyr::f_any(), dplyr::if_all()
+```{r}
+data %>% filter(if_all(.cols=contains("Базофилы"), .fns = function(x) x>1.5))
+data %>% filter(if_any(.cols=contains("Базофилы"), .fns = function(x) x>1.5))
+?if_any()
+```
+##Фильтрация с группированным датафреймом
+```{r}
+data %>% group_by(`Группа`) %>% 
+  filter(`Возраст`>36)
+```
+#6.6 Мутация переменных
+##dplyr::mutate()
+```{r}
+data %>% mutate(`Женщины с четвёртой группой крови` = ifelse(`Пол` == "Женский" & `Группа крови` == "AB (IV)", "Да", "Нет"))
+tibble(var_1 = 1:10,
+       var_2 = var_1 + 1.123) %>% 
+  mutate(var_sum = var_1+var_2,
+         var_minus = var_1 - var_2,
+         var_multiple = var_1 * var_2,
+         var_divide = var_1/var_2,
+         var_1_log = log(var_1),
+         var_1_log1p = log1p(var_1),
+         var_1_exp = exp(var_1_log),
+         var_1_exp1 = expm1(var_1_log1p),
+         var_2_round = round(var_2, 2),
+         var_2_ceil = ceiling(var_2),
+         var_2_floor = floor(var_2)) %>% 
+  glimpse()
+```
+##dplyr::case_when()
+```{r}
+data %>% 
+  mutate(`Возрастная группа` = case_when(`Возраст` < 20 ~ "< 20",
+                                         between(`Возраст`, 20, 30) ~ "20 - 30",
+                                         `Возраст` > 30 ~ "> 30") %>% as.factor()) %>% 
+  select(`Возраст`, `Возрастная группа`)
+```
+##tidyr::na_if(), tidyr::replace_na()
+```{r}
+data %>% 
+  mutate(`Группа крови` = `Группа крови` %>% as.character() %>% replace_na("Нет данных") %>% as.factor())
+data %>% 
+  mutate(`Группа крови` = `Группа крови` %>% na_if("B (III)"))
+```
+##NULL как удаление переменной
+```{r}
+data %>% mutate(`Группа`=NULL)
+```
+##Функция across() для применения других функций к подмножеству переменных
+```{r}
+data %>% 
+  mutate(across(where(is.numeric), function(x) (x = mean(x, na.rm = TRUE))/sd(x, na.rm = TRUE)))
+data %>% 
+  mutate(across(where(is.numeric), function(x) (x - mean(x, na.rm = TRUE))/sd(x, na.rm = TRUE)))
+data %>% 
+  mutate(across(contains("E1"), function(x) (x - mean(x, na.rm = TRUE))/sd(x, na.rm = TRUE)))
+data %>% 
+  mutate(across(function(x) mean(x, na.rm = TRUE) < 10, 
+                function(x) (x - mean(x, na.rm = TRUE))/sd(x, na.rm = TRUE)))
+```
+##Итерация по строкам
+```{r}
+data %>% 
+  rowwise() %>% 
+  mutate(`Среднее по базофилам`=mean(c_across(contains("Базофилы")))) %>% 
+  ungroup() %>% 
+  select(contains("Базофил"))
+```
+##Применение mutate() к сгруппированным датафреймам
+```{r}
+data %>% 
+  group_by(`Группа`) %>% 
+  mutate(across(contains("Базофилы"), function(x) x-mean(x, na.rm = TRUE))) %>% 
+  ungroup() %>% 
+  select(`Группа`, contains("Базофилы"))
+```
+#6.7 Переименование
+##dplyr::rename()
+```{r}
+data %>% 
+  rename(`Эритроциты_Визит 1` = `Эритроциты_E1`, `Эритроциты_Визит 2` = `Эритроциты_E2`) %>% 
+  select(contains("визит"))
+```
+##dplyr::rename_with(), stringi::stri_replace_all_regex()
+```{r}
+data %>% 
+  rename_with(function(x) x %>% stri_replace_all_regex(c("_E1", "_E2"), c("_Визит 1", "_Визит 2"), vectorize_all = FALSE)) %>% 
+  glimpse()
+data %>% 
+  rename_with(.cols = where(is.numeric), .fn = function(x) str_c(x, " КОЛИЧЕСТВЕННАЯ ПЕРЕМЕННАЯ")) %>% 
+  glimpse()
+```
+##:= и !! для особых случаев переименования
+```{r}
+new_name = "cool name"
+data %>% 
+  rename(!! new_name := `Группа`) %>% 
+  glimpse()
+```
+#6.8 Сортировка
+##dplyr::arrange()
+```{r}
+data %>% 
+  arrange(`Возраст`)
+data %>% 
+  arrange(`Группа крови`)
+data %>% 
+  arrange(desc(`Рост`))
+data %>% 
+  arrange(desc(`Рост`), `Возраст`)
+```
+##Сортировка внутри групп
+```{r}
+data %>% 
+  group_by(`Группа`) %>% 
+  arrange(`Возраст`, .by_group = TRUE)
+```
+#6.9 Повороты датафреймов
+##tidyr::pivot_longer()
+```{r}
+data %>% 
+  select(`Группа`, contains("E1")) %>% 
+  pivot_longer(!`Группа`)
+```
+##tidyr::pivot_wider()
+```{r}
+data %>% 
+  select(`Группа`, contains("E1")) %>% 
+  mutate(ID = row_number()) %>% 
+  pivot_longer(!c(`Группа`, ID)) %>% 
+  pivot_wider(id_cols=ID)
+```
+##6.10 Выбор уникальных сочетаний
+#dplyr::distinct()
+```{r}
+data %>% 
+  distinct(`Группа`, .keep_all =TRUE)
+```
+#6.11 Разделение и склеивание
+##tidyr::separate()
+```{r}
+tibble(var_1 = rep(paste0("first part", "__", "second part"), 10)) %>% 
+  separate(var_1, into = c("var_1", "var_2"), sep ="__")
+```
+##tidyr::unite()
+```{r}
+tibble(var_1 = rep(paste0("first part", "__", "second part"), 10)) %>% 
+  separate(var_1, into = c("var_1", "var_2"), sep ="__") %>% 
+  unite("new_var", var_1, var_2, sep = "AND")
+```
+
+
+#6.12 Расчёт статистик
+##dplyr::summarise()/dplyr::summarize()
+```{r}
+data %>% 
+  select(`Группа`,where(is.numeric)) %>% 
+  group_by(`Группа`) %>% 
+  summarize(across(where(is.numeric), function(x) mean(x, na.rm = TRUE)))
+```
+#6.12 Расчёт статистик
+##list() из функций для расчёта списка статистик
+```{r}
+statistics <- list(
+      `Количество субъектов` = ~length(.x),
+      `Количество (есть данные)` = ~sum(!is.na(.x)),
+      `Нет данных` = ~sum(is.na(.x)),
+      `Ср. знач.` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", mean(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `Станд. отклон.` = ~ifelse(sum(!is.na(.x)) < 3, "Н/П*", sd(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `95% ДИ для среднего` = ~sd(.x, na.rm = TRUE) %>% round(2) %>% as.character(),
+      `мин. - макс.` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", paste0(min(.x, na.rm = TRUE) %>% round(2), " - ", max(.x, na.rm = TRUE) %>% round(2))),
+      `Медиана` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", median(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `Q1 - Q3` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", paste0(quantile(.x, 0.25, na.rm = TRUE) %>% round(2), " - ", quantile(.x, 0.75, na.rm = TRUE) %>% round(2)))
+)
+```
+###Переделаем переменные в факторные
+```{r}
+data$Группа <- as.factor(data$Группа)
+data$Пол <- as.factor(data$Пол)
+data$`Группа крови`<- as.factor(data$`Группа крови`)
+data$Возраст <- as.integer(data$Возраст)
+```
+
+##Формирование статистической таблицы для количественной переменной
+```{r}
+statistics <- list(
+      `Количество субъектов` = ~length(.x) %>% as.character(),
+      `Количество (есть данные)` = ~sum(!is.na(.x)) %>% as.character(),
+      `Нет данных` = ~sum(is.na(.x)) %>% as.character(),
+      `Ср. знач.` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", mean(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `Станд. отклон.` = ~ifelse(sum(!is.na(.x)) < 3, "Н/П*", sd(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `95% ДИ для среднего` = ~sd(.x, na.rm = TRUE) %>% round(2) %>% as.character(),
+      `мин. - макс.` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", paste0(min(.x, na.rm = TRUE) %>% round(2), " - ", max(.x, na.rm = TRUE) %>% round(2))),
+      `Медиана` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", median(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `Q1 - Q3` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", paste0(quantile(.x, 0.25, na.rm = TRUE) %>% round(2), " - ", quantile(.x, 0.75, na.rm = TRUE) %>% round(2)))
+)
+data %>% 
+  select(`Группа`, where(is.numeric)) %>% 
+  group_by(`Группа`) %>% 
+  summarize(across(where(is.numeric), statistics)) %>% 
+  pivot_longer(!`Группа`) %>% 
+  separate(name, into = c("Переменная", "Статистика"), sep = "_") %>% 
+  rename(`Значение` = value)
+```
+
+##Формирование статистической таблицы для категориальной переменной
+```{r}
+data %>% 
+  select(`Группа`, `Группа крови`, where(is.factor)) %>% 
+  mutate(`Группа крови` = `Группа крови` %>% as.character() %>% replace_na("нет данных") %>% as.factor()) %>% count(`Группа`, `Группа крови`) %>% 
+  group_by(`Группа`) %>% 
+  mutate(`Процент по группе` = (n/sum(n)) %>% round(4) %>% `*`(100) %>% str_c("%")) %>% 
+  ungroup() %>% 
+  mutate(`Процент по выборке` = (n/sum(n)) %>% round(4) %>% `*`(100) %>% str_c("%"))
+
+```
+#7  Печать таблиц. 7.1 Пакет flextable
+## flextable::flextable()
+```{r}
+statistics <- list(
+      `Количество субъектов` = ~length(.x) %>% as.character(),
+      `Количество (есть данные)` = ~sum(!is.na(.x)) %>% as.character(),
+      `Нет данных` = ~sum(is.na(.x)) %>% as.character(),
+      `Ср. знач.` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", mean(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `Станд. отклон.` = ~ifelse(sum(!is.na(.x)) < 3, "Н/П*", sd(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `мин. - макс.` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", paste0(min(.x, na.rm = TRUE) %>% round(2), " - ", max(.x, na.rm = TRUE) %>% round(2))),
+      `Медиана` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", median(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `Q1 - Q3` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", paste0(quantile(.x, 0.25, na.rm = TRUE) %>% round(2), " - ", quantile(.x, 0.75, na.rm = TRUE) %>% round(2)))
+)
+data %>% 
+  select(`Группа`, where(is.numeric)) %>% 
+  group_by(`Группа`) %>% 
+  summarize(across(where(is.numeric), statistics)) %>% 
+  pivot_longer(!`Группа`) %>% 
+  separate(name, into = c("Переменная", "Статистика"), sep = "_") %>% 
+  rename(`Значение` = value) %>%
+  flextable()
+```
+##flextable::theme_box(), flextable::theme_booktabs(), flextable::theme_alafoli()
+```{r}
+statistics <- list(
+      `Количество субъектов` = ~length(.x) %>% as.character(),
+      `Количество (есть данные)` = ~sum(!is.na(.x)) %>% as.character(),
+      `Нет данных` = ~sum(is.na(.x)) %>% as.character(),
+      `Ср. знач.` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", mean(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `Станд. отклон.` = ~ifelse(sum(!is.na(.x)) < 3, "Н/П*", sd(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `95% ДИ для среднего` = ~sd(.x, na.rm = TRUE) %>% round(2) %>% as.character(),
+      `мин. - макс.` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", paste0(min(.x, na.rm = TRUE) %>% round(2), " - ", max(.x, na.rm = TRUE) %>% round(2))),
+      `Медиана` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", median(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `Q1 - Q3` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", paste0(quantile(.x, 0.25, na.rm = TRUE) %>% round(2), " - ", quantile(.x, 0.75, na.rm = TRUE) %>% round(2)))
+)
+data %>% 
+  select(`Группа`, where(is.numeric)) %>% 
+  group_by(`Группа`) %>% 
+  summarize(across(where(is.numeric), statistics)) %>% 
+  pivot_longer(!`Группа`) %>% 
+  separate(name, into = c("Переменная", "Статистика"), sep = "_") %>% 
+  rename(`Значение` = value) %>%
+  flextable() %>% 
+  theme_box()
+```
+##flextable::merge_h(), flextable::merge_v()
+```{r}
+statistics <- list(
+      `Количество субъектов` = ~length(.x) %>% as.character(),
+      `Количество (есть данные)` = ~sum(!is.na(.x)) %>% as.character(),
+      `Нет данных` = ~sum(is.na(.x)) %>% as.character(),
+      `Ср. знач.` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", mean(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `Станд. отклон.` = ~ifelse(sum(!is.na(.x)) < 3, "Н/П*", sd(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `95% ДИ для среднего` = ~sd(.x, na.rm = TRUE) %>% round(2) %>% as.character(),
+      `мин. - макс.` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", paste0(min(.x, na.rm = TRUE) %>% round(2), " - ", max(.x, na.rm = TRUE) %>% round(2))),
+      `Медиана` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", median(.x, na.rm = TRUE) %>% round(2) %>% as.character()),
+      `Q1 - Q3` = ~ifelse(sum(!is.na(.x)) == 0, "Н/П*", paste0(quantile(.x, 0.25, na.rm = TRUE) %>% round(2), " - ", quantile(.x, 0.75, na.rm = TRUE) %>% round(2)))
+)
+data %>% 
+  select(`Группа`, where(is.numeric)) %>% 
+  group_by(`Группа`) %>% 
+  summarize(across(where(is.numeric), statistics)) %>% 
+  pivot_longer(!`Группа`) %>% 
+  separate(name, into = c("Переменная", "Статистика"), sep = "_") %>% 
+  rename(`Значение` = value) %>%
+  flextable() %>% 
+  theme_box() %>% 
+  merge_v(c("Группа", "Переменная"))
+```
