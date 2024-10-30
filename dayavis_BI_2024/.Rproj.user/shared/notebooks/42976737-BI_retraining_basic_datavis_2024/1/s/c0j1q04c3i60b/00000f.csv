@@ -1,0 +1,5 @@
+"0","ggplot(hogwarts)+"
+"0","  geom_bar(aes(x = house,"
+"0","               fill = house),"
+"0","           colour = ""black"")+ "
+"0","  theme_bw()"

@@ -1,0 +1,7 @@
+"0","ggplot(hogwarts)+"
+"0","  geom_bar(aes(x = fct_infreq(wandCore),"
+"0","               fill = sex),"
+"0","           position = ""dodge2"","
+"0","           colour = ""black"")+"
+"0","  scale_x_discrete(name = ""wandCore"")+"
+"0","  theme_bw()"

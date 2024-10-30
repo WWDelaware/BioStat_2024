@@ -1,0 +1,8 @@
+"0","hogwarts |> "
+"0","  filter(id  %in% 1:40) |> "
+"0","  mutate(id = as.factor(id)) |> "
+"0","  ggplot()+"
+"0","  geom_segment(aes(x = fct_reorder(id, week_1, .desc =TRUE), xend = fct_reorder(id, week_1), y =0, yend = week_1))+"
+"0","  geom_point(aes(x = id, y = week_1), size = 3, colour = ""red"")+"
+"0","  theme_bw()+"
+"0","  theme_custom"
