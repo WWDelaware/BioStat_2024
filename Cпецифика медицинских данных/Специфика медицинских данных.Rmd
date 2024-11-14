@@ -1,0 +1,321 @@
+---
+title: "Специфика медицинских данных"
+author: "Sergey"
+date: "2024-11-13"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set
+library(tidyverse)
+library(readxl)
+library(flextable)
+library(pROC)
+library(gtsummary)
+```
+
+# Специфика медицинских данных. Домашнее задание
+## Загрузка датасета
+
+```{r read data}
+data <- read_excel("data/raw/trauma.xlsx")
+```
+
+## Изучение структуры датасета
+
+```{r structure}
+str(data)
+#View(data)
+summary(data)
+data <- data %>% 
+  # Переведём некоторые величины в факторные
+  mutate(across(c(Sex, FOUR, GSC), ~ as.factor(.x))) %>% 
+  # У летального исхода заменим 1 (наступил) на "Yes" и 0 (нет) на "No"  и переведём в фактор
+  mutate(Death = factor(Death, labels = (c("No", "Yes")))) %>% 
+  # Выделим численную составляющую из роста и переведём в метры
+  mutate(Height = round(0.01*2.54*as.numeric(sub('"', '', Height)), 3)) %>% 
+  # Переведём фунты в кг
+  mutate(Weight = round(Weight/2.2, 1)) %>% 
+  # Рассчитаем индекс массы-тела
+  mutate(BMI = (Weight / Height / Height) %>% round(1))
+
+# Посчитаем количество пропущенных значений
+sum(is.na(data))
+```
+
+d – номер пациента в списке 
+Name – имя фамилия пациента 
+Sex – пол пациента 
+Age – возраст пациента (лет) 
+Height – рост пациента (дюймы1) 
+Weight – масса тела пациента (фунты2) 
+SBP – систолическое артериальное давление при поступлении (мм рт.ст.) 
+DBP – диастолическое артериальное давление при поступлении (мм рт.ст.) 
+FOUR – балл по шкале комы FOUR при поступлении 
+GSC  – балл по шкале комы Глазго при поступлении 
+Hb – уровень гемоглобина при поступлении (г/дл) 
+Death – летальный исход в течение 24 часов (1 – наступил, 0 – нет)
+
+## Задание 1
+Дайте описательную статистику для переменных, включённых в датасет. Дополнительно рассчитайте, у какого количества пациентов и в каком проценте случаев у пациентов был снижен уровень гемоглобина? Используйте следующие референтные значения (Мужчины: 13.5–16 г/дл, Женщины: 12–14 г/дл). 
+
+```{r descriptive statistics}
+# Описательная статистика
+data %>% 
+  select(where(is.numeric) & !id) %>% 
+         summary()
+
+len <- nrow(data)
+summary_stats <- data %>% 
+  summarise(
+    n = len %>% round(0),
+    Mean_Age = mean(Age) %>% round(1),
+    SD_Age = sd(Age) %>% round(1),
+    Median_Age = median(Age)  %>% round(1),
+    min_Age = min(Age),
+    max_Age = max(Age),
+    se_Age = (sd(Age) / sqrt(len)) %>% round(1),
+    lower_ci_Age = (Mean_Age - qt(0.975, len - 1) * se_Age)  %>% round(1),
+    upper_ci_Age = (Mean_Age + qt(0.975, len - 1) * se_Age)  %>% round(1),
+
+    Mean_Height = mean(Height)  %>% round(1),
+    SD_Height = sd(Height)  %>% round(1),
+    Median_Height = median(Height) %>% round(1),
+    min_Height = min(Height) %>% round(1),
+    max_Height = max(Height) %>% round(1),
+    se_Height = (sd(Height) / sqrt(len)) %>% round(1),
+    lower_ci_Height = (Mean_Height - qt(0.975, len - 1) * se_Height) %>% round(1),
+    upper_ci_Height = (Mean_Height + qt(0.975, len - 1) * se_Height) %>% round(1),
+    
+    Mean_Weight = mean(Weight) %>% round(1),
+    SD_Weight = sd(Weight) %>% round(1),
+    Median_Weight = median(Weight) %>% round(1),
+    min_Weight = min(Weight),
+    max_Weight = max(Weight),
+    se_Weight = (sd(Weight) / sqrt(len)) %>% round(1),
+    lower_ci_Weight = (Mean_Weight - qt(0.975, len - 1) * se_Weight) %>% round(1),
+    upper_ci_Weight = (Mean_Weight + qt(0.975, len - 1) * se_Weight) %>% round(1),
+    
+    Mean_SBP = mean(SBP) %>% round(1),
+    SD_SBP = sd(SBP) %>% round(1),
+    Median_SBP = median(SBP) %>% round(1),
+    min_SBP = min(SBP),
+    max_SBP = max(SBP),
+    se_SBP = (sd(SBP) / sqrt(len)) %>% round(1),
+    lower_ci_SBP = (Mean_SBP - qt(0.975, len - 1) * se_SBP) %>% round(1),
+    upper_ci_SBP = (Mean_SBP + qt(0.975, len - 1) * se_SBP) %>% round(1),
+    
+    Mean_DBP = mean(DBP) %>% round(1),
+    SD_DBP = sd(DBP) %>% round(1),
+    Median_DBP = median(DBP) %>% round(1),
+    min_DBP = min(DBP),
+    max_DBP = max(DBP),
+    se_DBP = (sd(DBP) / sqrt(len)) %>% round(1),
+    lower_ci_DBP = (Mean_DBP - qt(0.975, len - 1) * se_DBP) %>% round(1),
+    upper_ci_DBP = (Mean_DBP + qt(0.975, len - 1) * se_DBP) %>% round(1),
+    
+    Mean_Hb = mean(Hb) %>% round(1),
+    SD_Hb = sd(Hb) %>% round(1),
+    Median_Hb = median(Hb) %>% round(1),
+    min_Hb = min(Hb),
+    max_Hb = max(Hb),
+    se_Hb = (sd(Hb) / sqrt(len)) %>% round(1),
+    lower_ci_Hb = (Mean_Hb - qt(0.975, len - 1) * se_Hb) %>% round(1),
+    upper_ci_Hb = (Mean_Hb + qt(0.975, len - 1) * se_Hb) %>% round(1),
+    
+    Mean_BMI = mean(BMI) %>% round(1),
+    SD_BMI = sd(BMI) %>% round(1),
+    Median_BMI = median(BMI) %>% round(1),
+    min_BMI = min(BMI),
+    max_BMI = max(BMI),
+    se_BMI = (sd(BMI) / sqrt(len)) %>% round(1),
+    lower_ci_BMI = (Mean_BMI - qt(0.975, len - 1) * se_BMI) %>% round(1),
+    upper_ci_BMI = (Mean_BMI + qt(0.975, len - 1) * se_BMI) %>% round(1)
+  ) %>% 
+  #mutate(Number_of_Women = (plyr::count(data$Sex)$freq[count(data$Sex)$x == "Female"]) %>% round(0),
+  #       Number_of_Men = (plyr::count(data$Sex)$freq[count(data$Sex)$x == "Male"]) %>% round(0),
+  #       Dead = (plyr::count(data$Death)$freq[count(data$Death)$x == "Yes"]) %>% round(0),
+  #       Alive = (plyr::count(data$Death)$freq[count(data$Death)$x == "No"]) %>% round(0)) %>% 
+  pivot_longer(everything(), names_to = "Statistics", values_to = "Values") %>% 
+  flextable()
+  
+summary_stats
+
+summary_stats_pretty <- data %>% 
+  select(Age, Height, Weight, BMI, SBP, DBP, Hb) %>% 
+    tbl_summary()
+
+summary_stats_pretty
+
+# Рассмотрим ситуацию по группам с различным исходом (Death)
+summary_stats_death <- data %>% 
+  select(Age, Height, Weight, BMI, SBP, DBP, Hb, Death) %>% 
+    tbl_summary(by = Death) %>% 
+  add_p()
+
+summary_stats_death
+
+# Подсчёт количества и доли пациентов с пониженным гемоглобином
+Hb_below_average <- data %>%
+  mutate(Low_Hb = case_when(
+    Sex == "Male" & Hb < 13.5 ~ TRUE,
+    Sex == "Female" & Hb < 12 ~ TRUE,
+    TRUE ~ FALSE
+  )) %>%
+  summarise(
+    Low_Hb_Count = sum(Low_Hb),
+    Low_Hb_Percentage = (sum(Low_Hb)/nrow(data))*100
+  )
+
+Hb_below_average
+```
+
+## Задание 2
+Рассчитайте индекс массы тела у пациентов  (кг / м2). Каков был средний (M (SD)) уровень ИМТ у пациентов, включённых в исследование? Какая доля пациентов имела ожирение (ИМТ > 30)?
+
+```{r BMI}
+# Индекс массы тела был рассчитан в разделе "Изучение структуры датасета"
+data %>% 
+  select(id, Name, BMI) %>% 
+  head()
+
+# Расчёт среднего и стандартного отклонения ИМТ у пациентов
+mean(data$BMI)
+sd(data$BMI)
+
+# Расчёт доли пациентов с повышенным BMI
+High_BMI <- data[data$BMI > 30,]
+Hight_BMI_percenatage <- ((nrow(High_BMI)/nrow(data))*100) %>% round(1)
+print(Hight_BMI_percenatage)
+```
+
+## Задание 3 
+Как выглядит ROC-кривая для предсказания летального исхода в течение 24 часов по переменной, характеризующей уровень гемоглобина? Постройте график. Чем может быть обусловлена такая форма кривой? 
+
+```{r ROC}
+roc_curve_Hb <- roc(Death ~ Hb, 
+                   data = data,
+                   ci = T)
+
+roc_curve_Hb %>% 
+    ggroc() + 
+    theme_bw()
+
+roc_curve_Hb
+```
+
+В данном случае использовалась модель, в которой смерть через 24ч -  зависимая переменная, а уровень гемоглобина - независимая (Death ~ Hb). Поскольку площадь под кривой примерно равна 0,7 и форма кривой значительно отличается от диагонали, следовательно модель Death ~ Hb обладает умеренной предсказательной способностью, т.е. при проверке крови пацинтов с черепно-мозговой травмой следует обращать внимание на пониженный гемоглобин и предпринимать действия, снижающие вероятнсоть наступления летального исхода.
+
+## Задание 4
+
+Чему равна площадь под ROC-кривой, которую вы построили в вопросе 3? Чему равен 95% двусторонний ДИ для площади под ROC-кривой, которую вы построили в вопросе 3?
+
+```{r ROC area & CI}
+# Площадь под кривой
+print(roc_curve_Hb$auc)
+# Доверительные интервалы
+print(roc_curve_Hb$ci)
+```
+Площадь - 0,7006, 95% ДИ - 0.6691-0.7321
+
+## Задание 5
+Проведите ROC-анализ и определите, какое пороговое значение является оптимальным для предсказания летального исхода в течение 24 часов по шкале комы Глазго. Какой чувствительностью и специфичностью обладает данный порог? 
+
+```{r }
+roc_curve_GSC <- roc(Death ~ as.numeric(GSC), 
+                   data = data,
+                   ci = T)
+
+roc_curve_GSC %>% 
+    ggroc() + 
+    theme_bw() 
+
+roc_curve_GSC
+
+# Выбираем наилучший порог
+roc_curve_GSC %>% coords(x = "best", best.method = "closest.topleft")
+
+# Поскольку порог по шкале Глазго должен быть целочисленный, найдем значения чувствительности и специфичности у ближайших целочисленных баллов по шкале и сравним их значения с теми, что были вычислены в предыдущем шаге
+roc_curve_GSC %>% coords(x = 5, input = "threshold", ret = c("specificity", "sensitivity"))
+roc_curve_GSC %>% coords(x = 6, input = "threshold", ret = c("specificity", "sensitivity"))
+```
+
+Поскольку балл по шкале Глазго целочисленный, то выбрать стоит порог в 5 балов по школе Глазго, тогда его значения чувствительности и специфичнсоти будут близки к найденному с помощью coords(x="best"): 
+Чувствительность - 0.8557457, специфичность - 0.8081301.
+
+## Задание 5
+
+Какая из количественных переменных в датасете (включая рассчитанный вами ранее ИМТ) обладает наибольшей площадью под ROC-кривой? Как вы можете интерпретировать это знание? Какая количественная переменная имеет наименьшую площадь? 
+
+```{r optimal ROC}
+#Временно переведём FOUR и GSC в численные переменные иначе is.numeric их не найдёт
+numeric_data <- data %>% 
+  select(where(is.numeric) & !id, FOUR, GSC) %>% 
+  mutate(FOUR = as.numeric(FOUR),
+         GSC = as.numeric(GSC))
+
+roc_curves <- NULL
+# Расчет ROC-кривых для каждой количественной переменной
+for (var in names(numeric_data)) {
+  if (is.numeric(numeric_data[[var]])) {
+    roc_curves[[var]] <- tryCatch({
+      roc(data$Death ~ numeric_data[[var]], ci = TRUE)
+    }, error = function(e) {
+      message(paste("Error in calculating ROC for variable", var, ":", e$message))
+      return(NULL)
+    })
+  }
+}
+
+roc_curves
+
+s <- -Inf
+s1 <- Inf
+k <- NULL
+k1 <- NULL
+best_var <- NULL
+worst_var <- NULL
+
+for (var in names(numeric_data)) {
+  if (var %in% names(roc_curves)) {
+    if (roc_curves[[var]]$auc > s) {
+      s <- roc_curves[[var]]$auc
+      k <- roc_curves[[var]]
+      best_var <- var
+    }
+    if (roc_curves[[var]]$auc < s1) {
+      s1 <- roc_curves[[var]]$auc
+      k1 <- roc_curves[[var]]
+      worst_var <- var
+    }
+  }
+}
+
+# Наибольшая площадь
+print("Наибольшая площадь")
+print(s)
+# Переменная с наибольшей площадью
+print(best_var)
+# ROC кривая для переменной с наибольшей площадью
+k
+k %>% 
+    ggroc() + 
+    theme_bw()
+
+# Наименьшая площадь
+print("Наименьшая площадь")
+print(s1)
+# Переменная с наименьшей площадью
+print(worst_var)
+# ROC кривая для переменной с наименьшей площадью
+k1
+k1 %>% 
+    ggroc() + 
+    theme_bw()
+
+
+```
+
+Таким образом, наибольшей площадью под ROC кривой будет обладать переменная FOUR - балл по шкале комы FOUR при поступлении. Наименьшей предсказательной способностью обладает переменная Height - рост. Таким образом, балл по шкале комы обладает наилучшей (отличной) предсказательной способностью летального исхода в течение 24 часов, а рост пациента, как и следовало ожидать, наименее информативен при предсказании летального исхода. Стоит отметить, что при определении балла по данной шкале учитываются глазные реакции, двигательные реакции, стволовые рефлексы, дыхательный паттерн, а также она точнее детализирует неврологический статус. Следовало ожидать, что данная шкала важна при учете состояния пациента, доставленного в реанимацию с черепно-мозговой травмой.
