@@ -1,4 +1,0 @@
-"0","ggplot(hogwarts)+"
-"0","  geom_bar(aes(x = result))+"
-"0","  theme_bw()+"
-"0","  theme_custom"

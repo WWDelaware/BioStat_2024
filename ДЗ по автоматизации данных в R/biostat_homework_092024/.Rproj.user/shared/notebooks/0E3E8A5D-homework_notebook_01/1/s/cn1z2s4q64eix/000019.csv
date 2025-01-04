@@ -1,0 +1,34 @@
+"0","# Приводим данные в порядок, исправляем тип, переводим факторные переменные из строчных, переименовываем факторы, атрибуты, отфильтровываем аномалии"
+"0","cleaned_data <- data %>% "
+"0","  mutate(gender = if_else(gender==1, ""Male"", ""Female"")) %>%"
+"0","  mutate(across(c(gender, cholesterol, gluc, smoke, active, cardio), ~ as.factor(.x))) %>% "
+"0","  mutate(weight = as.numeric(weight)) %>% mutate(weight = round(weight,0)) %>%"
+"0","  mutate(across(c(cholesterol, gluc), ~ factor(.x, levels = c(1,2,3), labels = c(""normal"", ""above normal"", ""well above normal"")))) %>% "
+"0","  mutate(across(c(smoke, alco, active, cardio), ~ factor(.x, levels = c(0,1), labels = c(""yes"", ""no"")))) %>%"
+"0","  mutate(age = age/365) %>% mutate(age = round(age,0)) %>%"
+"0","  mutate(ap_hi = if_else(ap_hi < 0 & between(abs(ap_hi), 50, 250), abs(ap_hi), ap_hi)) %>% "
+"0","   mutate(ap_lo = if_else(ap_lo < 0 & between(abs(ap_lo), 20, 140), abs(ap_lo), ap_lo)) %>% "
+"0","  filter(height >= 100, weight >= 20, ap_hi >= 90 & ap_hi <= 150, ap_lo >= 20 & ap_lo <= 140) %>% "
+"0","  rename(`Age` = `age`,"
+"0","          `Height` = `height`,"
+"0","          `Weight` = `weight`,"
+"0","          `Gender` = `gender`, "
+"0","          `Systolic blood pressure` = `ap_hi`, "
+"0","          `Diastolic blood pressure` = `ap_lo`,"
+"0","          `Cholesterol` = `cholesterol`,"
+"0","          `Glucose` = `gluc`,"
+"0","          `Smoking` = `smoke`,"
+"0","          `Alcohol intake` = `alco`,"
+"0","          `Physical activity` = `active`,"
+"0","          `Presence or absence of cardiovascular disease` = `cardio`)"
+"1","[1m[33mError[39m in `mutate()`:[22m
+[38;5;254m[36mℹ[38;5;254m In argument: `gender = if_else(gender == 1,
+  ""Male"", ""Female"")`.[39m
+[1mCaused by error:[22m
+[33m![39m объект 'gender' не найден
+Backtrace:
+[90m  1. [39m... %>% ...
+[90m 20. [39m[1mdplyr[22m::if_else(gender == 1, ""Male"", ""Female"")
+[90m 21. [39mdplyr:::check_logical(condition)
+[90m 22. [39m[1mrlang[22m::is_logical(x)
+"

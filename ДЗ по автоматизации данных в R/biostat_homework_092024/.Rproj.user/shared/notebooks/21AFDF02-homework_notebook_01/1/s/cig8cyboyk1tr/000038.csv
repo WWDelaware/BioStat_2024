@@ -1,0 +1,13 @@
+"0",""
+"0","correlation <- cleaned_data %>% "
+"0","  select(is.numeric & !id) %>% "
+"0","  cor(use = ""complete.obs"")"
+"2","Предупреждение: Use of bare predicate functions was deprecated in tidyselect 1.1.0.
+Please use wrap predicates in `where()` instead.
+# Was:
+data %>% select(is.numeric)
+
+# Now:
+data %>% select(where(is.numeric))"
+"0","corrplot(correlation, method = ""color"", type = ""upper"", order = ""hclust"", "
+"0","         tl.col = ""black"", tl.srt = 45, addCoef.col = ""black"", number.cex = 0.8)"

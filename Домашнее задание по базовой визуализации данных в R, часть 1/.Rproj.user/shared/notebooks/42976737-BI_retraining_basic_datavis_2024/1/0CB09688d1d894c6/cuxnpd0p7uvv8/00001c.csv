@@ -1,0 +1,16 @@
+"0","hogwarts |> 
+  filter(house == ""Slytherin"") |> 
+  select(id, `Potions exam`, `Transfiguration exam`, , `Defence against the dark arts exam`, sex) |> 
+  pivot_longer(-c(id, sex), 
+               names_to = ""exam"", 
+               values_to = ""score"") |> 
+  ggplot(aes(x = exam, y = score, fill = sex))+
+  geom_boxplot(notch = TRUE, outliers = FALSE)+
+  geom_jitter(outliers = FALSE)+
+  theme_bw()+
+  theme_custom+
+  annotate(""text"", x = `Potions exam`, y = 50, label = ""To be continued..."")
+"
+"2","Warning: [38;5;252mIgnoring unknown parameters: `outliers`[39m"
+"2","Error: object 'Potions exam' not found
+"

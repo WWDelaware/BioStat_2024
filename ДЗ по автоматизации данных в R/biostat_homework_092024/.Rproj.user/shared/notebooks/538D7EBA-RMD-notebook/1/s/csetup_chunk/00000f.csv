@@ -1,0 +1,15 @@
+"0","knitr::opts_chunk$set(echo = TRUE)"
+"0","library(tibble)"
+"0","library(psych)"
+"2","
+Присоединяю пакет: ‘psych’
+
+"
+"2","Следующие объекты скрыты от ‘package:ggplot2’:
+
+    %+%, alpha
+
+"
+"0","library(tidyverse)"
+"0","library(stringi)"
+"0","library(flextable)"

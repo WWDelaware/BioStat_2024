@@ -1,0 +1,4 @@
+"0","#Визуализация с помощью баплота зависимости между полом и наличием/отсутствием сердечных заболеваний"
+"0","cleaned_data %>%  "
+"0","  ggplot(aes(x=Gender, y = `Presence or absence of cardiovascular disease`))+"
+"0","  geom_col()"

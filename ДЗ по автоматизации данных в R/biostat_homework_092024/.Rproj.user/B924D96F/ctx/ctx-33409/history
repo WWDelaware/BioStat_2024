@@ -1,0 +1,512 @@
+mutate(across(c(gender, cholesterol, gluc, smoke, active, cardio), ~ as.factor(.x))) %>%
+mutate(weight = as.numeric(weight)) %>% mutate(weight = round(weight,0)) %>%
+mutate(across(c(cholesterol, gluc), ~ factor(.x, levels = c(1,2,3), labels = c("normal", "above normal", "well above normal")))) %>%
+mutate(across(c(smoke, alco, active, cardio), ~ factor(.x, levels = c(0,1), labels = c("yes", "no")))) %>%
+mutate(age = age/365) %>% mutate(age = round(age,0)) %>%
+mutate(ap_hi = if_else(ap_hi < 0 & between(abs(ap_hi), 50, 250), abs(ap_hi), ap_hi)) %>%
+mutate(ap_lo = if_else(ap_lo < 0 & between(abs(ap_lo), 60, 90), abs(ap_lo), ap_lo)) %>%
+filter(height >= 140, weight >= 40, ap_hi >= 90 & ap_hi <= 150, ap_lo >= 60 & ap_lo <= 100) %>%
+rename(`Age` = `age`,
+`Height` = `height`,
+`Weight` = `weight`,
+`Gender` = `gender`,
+`Systolic blood pressure` = `ap_hi`,
+`Diastolic blood pressure` = `ap_lo`,
+`Cholesterol` = `cholesterol`,
+`Glucose` = `gluc`,
+`Smoking` = `smoke`,
+`Alcohol intake` = `alco`,
+`Physical activity` = `active`,
+`Presence or absence of cardiovascular disease` = `cardio`)
+outliers <- cleaned_data %>%
+mutate(across(c(Age, Height, Weight, `Systolic blood pressure`, `Diastolic blood pressure`), ~ find_outliers(.), .names = "outlier_{col}"))
+# Приводим данные в порядок, исправляем тип, переводим факторные переменные из строчных, переименовываем факторы, атрибуты, отфильтровываем аномалии
+find_outliers <- function(column) {
+mean_val <- mean(column, na.rm = TRUE)
+sd_val <- sd(column, na.rm = TRUE)
+lower_bound <- mean_val - 3 * sd_val
+upper_bound <- mean_val + 3 * sd_val
+outlier<- column < lower_bound | column > upper_bound
+return(outliers)
+}
+cleaned_data <- data %>%
+mutate(gender = if_else(gender==1, "Male", "Female")) %>%
+mutate(across(c(gender, cholesterol, gluc, smoke, active, cardio), ~ as.factor(.x))) %>%
+mutate(weight = as.numeric(weight)) %>% mutate(weight = round(weight,0)) %>%
+mutate(across(c(cholesterol, gluc), ~ factor(.x, levels = c(1,2,3), labels = c("normal", "above normal", "well above normal")))) %>%
+mutate(across(c(smoke, alco, active, cardio), ~ factor(.x, levels = c(0,1), labels = c("yes", "no")))) %>%
+mutate(age = age/365) %>% mutate(age = round(age,0)) %>%
+mutate(ap_hi = if_else(ap_hi < 0 & between(abs(ap_hi), 50, 250), abs(ap_hi), ap_hi)) %>%
+mutate(ap_lo = if_else(ap_lo < 0 & between(abs(ap_lo), 60, 90), abs(ap_lo), ap_lo)) %>%
+filter(height >= 140, weight >= 40, ap_hi >= 90 & ap_hi <= 150, ap_lo >= 60 & ap_lo <= 100) %>%
+rename(`Age` = `age`,
+`Height` = `height`,
+`Weight` = `weight`,
+`Gender` = `gender`,
+`Systolic blood pressure` = `ap_hi`,
+`Diastolic blood pressure` = `ap_lo`,
+`Cholesterol` = `cholesterol`,
+`Glucose` = `gluc`,
+`Smoking` = `smoke`,
+`Alcohol intake` = `alco`,
+`Physical activity` = `active`,
+`Presence or absence of cardiovascular disease` = `cardio`)
+outliers <- cleaned_data %>%
+mutate(across(c(Age, Height, Weight, `Systolic blood pressure`, `Diastolic blood pressure`), ~ find_outliers(.), .names = "outlier_{col}"))
+# Приводим данные в порядок, исправляем тип, переводим факторные переменные из строчных, переименовываем факторы, атрибуты, отфильтровываем аномалии
+find_outliers <- function(column) {
+mean_val <- mean(column, na.rm = TRUE)
+sd_val <- sd(column, na.rm = TRUE)
+lower_bound <- mean_val - 3 * sd_val
+upper_bound <- mean_val + 3 * sd_val
+outlier<- column < lower_bound | column > upper_bound
+return(outliers)
+}
+cleaned_data <- data %>%
+mutate(gender = if_else(gender==1, "Male", "Female")) %>%
+mutate(across(c(gender, cholesterol, gluc, smoke, active, cardio), ~ as.factor(.x))) %>%
+mutate(weight = as.numeric(weight)) %>% mutate(weight = round(weight,0)) %>%
+mutate(across(c(cholesterol, gluc), ~ factor(.x, levels = c(1,2,3), labels = c("normal", "above normal", "well above normal")))) %>%
+mutate(across(c(smoke, alco, active, cardio), ~ factor(.x, levels = c(0,1), labels = c("yes", "no")))) %>%
+mutate(age = age/365) %>% mutate(age = round(age,0)) %>%
+mutate(ap_hi = if_else(ap_hi < 0 & between(abs(ap_hi), 50, 250), abs(ap_hi), ap_hi)) %>%
+mutate(ap_lo = if_else(ap_lo < 0 & between(abs(ap_lo), 60, 90), abs(ap_lo), ap_lo)) %>%
+filter(height >= 140, weight >= 40, ap_hi >= 90 & ap_hi <= 150, ap_lo >= 60 & ap_lo <= 100) %>%
+rename(`Age` = `age`,
+`Height` = `height`,
+`Weight` = `weight`,
+`Gender` = `gender`,
+`Systolic blood pressure` = `ap_hi`,
+`Diastolic blood pressure` = `ap_lo`,
+`Cholesterol` = `cholesterol`,
+`Glucose` = `gluc`,
+`Smoking` = `smoke`,
+`Alcohol intake` = `alco`,
+`Physical activity` = `active`,
+`Presence or absence of cardiovascular disease` = `cardio`)
+outliers <- cleaned_data %>%
+mutate(across(c(Age, Height, Weight, `Systolic blood pressure`, `Diastolic blood pressure`), ~ find_outliers(.), .names = "outlier_{col}"))
+# Приводим данные в порядок, исправляем тип, переводим факторные переменные из строчных, переименовываем факторы, атрибуты, отфильтровываем аномалии
+find_outliers <- function(column) {
+mean_val <- mean(column, na.rm = TRUE)
+sd_val <- sd(column, na.rm = TRUE)
+lower_bound <- mean_val - 3 * sd_val
+upper_bound <- mean_val + 3 * sd_val
+outlier<- column < lower_bound | column > upper_bound
+return(outliers)
+}
+cleaned_data <- data %>%
+mutate(gender = if_else(gender==1, "Male", "Female")) %>%
+mutate(across(c(gender, cholesterol, gluc, smoke, active, cardio), ~ as.factor(.x))) %>%
+mutate(weight = as.numeric(weight)) %>% mutate(weight = round(weight,0)) %>%
+mutate(across(c(cholesterol, gluc), ~ factor(.x, levels = c(1,2,3), labels = c("normal", "above normal", "well above normal")))) %>%
+mutate(across(c(smoke, alco, active, cardio), ~ factor(.x, levels = c(0,1), labels = c("yes", "no")))) %>%
+mutate(age = age/365) %>% mutate(age = round(age,0)) %>%
+mutate(ap_hi = if_else(ap_hi < 0 & between(abs(ap_hi), 50, 250), abs(ap_hi), ap_hi)) %>%
+mutate(ap_lo = if_else(ap_lo < 0 & between(abs(ap_lo), 60, 90), abs(ap_lo), ap_lo)) %>%
+filter(height >= 140, weight >= 40, ap_hi >= 90 & ap_hi <= 150, ap_lo >= 60 & ap_lo <= 100) %>%
+rename(`Age` = `age`,
+`Height` = `height`,
+`Weight` = `weight`,
+`Gender` = `gender`,
+`Systolic blood pressure` = `ap_hi`,
+`Diastolic blood pressure` = `ap_lo`,
+`Cholesterol` = `cholesterol`,
+`Glucose` = `gluc`,
+`Smoking` = `smoke`,
+`Alcohol intake` = `alco`,
+`Physical activity` = `active`,
+`Presence or absence of cardiovascular disease` = `cardio`)
+outliers <- cleaned_data %>%
+mutate(across(c(Age, Height, Weight, `Systolic blood pressure`, `Diastolic blood pressure`), ~ find_outliers(.), .names = "outlier_{col}"))
+# Приводим данные в порядок, исправляем тип, переводим факторные переменные из строчных, переименовываем факторы, атрибуты, отфильтровываем аномалии
+find_outliers <- function(column) {
+mean_val <- mean(column, na.rm = TRUE)
+sd_val <- sd(column, na.rm = TRUE)
+lower_bound <- mean_val - 3 * sd_val
+upper_bound <- mean_val + 3 * sd_val
+outlier<- column < lower_bound | column > upper_bound
+return(outliers)
+}
+cleaned_data <- data %>%
+mutate(gender = if_else(gender==1, "Male", "Female")) %>%
+mutate(across(c(gender, cholesterol, gluc, smoke, active, cardio), ~ as.factor(.x))) %>%
+mutate(weight = as.numeric(weight)) %>% mutate(weight = round(weight,0)) %>%
+mutate(across(c(cholesterol, gluc), ~ factor(.x, levels = c(1,2,3), labels = c("normal", "above normal", "well above normal")))) %>%
+mutate(across(c(smoke, alco, active, cardio), ~ factor(.x, levels = c(0,1), labels = c("yes", "no")))) %>%
+mutate(age = age/365) %>% mutate(age = round(age,0)) %>%
+mutate(ap_hi = if_else(ap_hi < 0 & between(abs(ap_hi), 50, 250), abs(ap_hi), ap_hi)) %>%
+mutate(ap_lo = if_else(ap_lo < 0 & between(abs(ap_lo), 60, 90), abs(ap_lo), ap_lo)) %>%
+filter(height >= 140, weight >= 40, ap_hi >= 90 & ap_hi <= 150, ap_lo >= 60 & ap_lo <= 100) %>%
+rename(`Age` = `age`,
+`Height` = `height`,
+`Weight` = `weight`,
+`Gender` = `gender`,
+`Systolic blood pressure` = `ap_hi`,
+`Diastolic blood pressure` = `ap_lo`,
+`Cholesterol` = `cholesterol`,
+`Glucose` = `gluc`,
+`Smoking` = `smoke`,
+`Alcohol intake` = `alco`,
+`Physical activity` = `active`,
+`Presence or absence of cardiovascular disease` = `cardio`)
+outliers <- cleaned_data %>%
+mutate(across(c(Age, Height, Weight, `Systolic blood pressure`, `Diastolic blood pressure`), ~ find_outliers(.), .names = "outlier_{col}"))
+data <- read.csv2("data\\raw\\cardio_train_big.csv")
+find_outliers <- function(column) {
+mean_val <- mean(column, na.rm = TRUE)
+sd_val <- sd(column, na.rm = TRUE)
+lower_bound <- mean_val - 3 * sd_val
+upper_bound <- mean_val + 3 * sd_val
+outlier<- column < lower_bound | column > upper_bound
+return(outliers)
+}
+cleaned_data <- data %>%
+mutate(gender = if_else(gender==1, "Male", "Female")) %>%
+mutate(across(c(gender, cholesterol, gluc, smoke, active, cardio), ~ as.factor(.x))) %>%
+mutate(weight = as.numeric(weight)) %>% mutate(weight = round(weight,0)) %>%
+mutate(across(c(cholesterol, gluc), ~ factor(.x, levels = c(1,2,3), labels = c("normal", "above normal", "well above normal")))) %>%
+mutate(across(c(smoke, alco, active, cardio), ~ factor(.x, levels = c(0,1), labels = c("yes", "no")))) %>%
+mutate(age = age/365) %>% mutate(age = round(age,0)) %>%
+mutate(ap_hi = if_else(ap_hi < 0 & between(abs(ap_hi), 50, 250), abs(ap_hi), ap_hi)) %>%
+mutate(ap_lo = if_else(ap_lo < 0 & between(abs(ap_lo), 60, 90), abs(ap_lo), ap_lo)) %>%
+filter(height >= 140, weight >= 40, ap_hi >= 90 & ap_hi <= 150, ap_lo >= 60 & ap_lo <= 100) %>%
+rename(`Age` = `age`,
+`Height` = `height`,
+`Weight` = `weight`,
+`Gender` = `gender`,
+`Systolic blood pressure` = `ap_hi`,
+`Diastolic blood pressure` = `ap_lo`,
+`Cholesterol` = `cholesterol`,
+`Glucose` = `gluc`,
+`Smoking` = `smoke`,
+`Alcohol intake` = `alco`,
+`Physical activity` = `active`,
+`Presence or absence of cardiovascular disease` = `cardio`)
+outliers <- cleaned_data %>%
+mutate(across(c(Age, Height, Weight, `Systolic blood pressure`, `Diastolic blood pressure`), ~ find_outliers(.), .names = "outlier_{col}"))
+outliers <- cleaned_data %>%
+mutate(across(c(Age, Height, Weight, `Systolic blood pressure`, `Diastolic blood pressure`), ~ find_outliers(.), .names = "outlier_{col}"))
+outliers
+outliers <- cleaned_data %>%
+mutate(across(c(Age, Height, Weight, `Systolic blood pressure`, `Diastolic blood pressure`), ~ find_outliers(.), .names = "outlier_{col}"))
+cleaned_data %>%
+find_outliers(Age)
+cleaned_data %>%
+find_outliers()
+cleaned_data %>%
+find_outliers()
+cleaned_data
+cleaned_data %>%
+find_outliers(Age:`Physical activity`)
+cleaned_data %>%
+find_outliers(Age:`Physical activity`)
+find_outliers
+find_outliers(cleaned_data$Age)
+find_outliers1 <- function(column) {
+mean_val <- mean(column, na.rm = TRUE)
+sd_val <- sd(column, na.rm = TRUE)
+lower_bound <- mean_val - 3 * sd_val
+upper_bound <- mean_val + 3 * sd_val
+outlier<- column < lower_bound | column > upper_bound
+return(outliers)
+}
+find_outliers1(cleaned_data$Age)
+find_outliers <- function(column) {
+mean_val <- mean(column, na.rm = TRUE)
+sd_val <- sd(column, na.rm = TRUE)
+lower_bound <- mean_val - 3 * sd_val
+upper_bound <- mean_val + 3 * sd_val
+outlier<- column < lower_bound | column > upper_bound
+return(outliers)
+}
+outliers <- cleaned_data %>%
+mutate(across(c(Age, Height, Weight, `Systolic blood pressure`, `Diastolic blood pressure`), ~ find_outliers(.), .names = "outlier_{col}"))
+find_outliers <- function(data, column) {
+mean_val <- mean(data$column, na.rm = TRUE)
+sd_val <- sd(data$column, na.rm = TRUE)
+lower_bound <- mean_val - 3 * sd_val
+upper_bound <- mean_val + 3 * sd_val
+outlier<- data$column < lower_bound | data$column > upper_bound
+return(outliers)
+}
+cleaned_data %>%
+find_outliers(Age:`Physical activity`)
+find_outliers
+find_outliers(cleaned_data$Age)
+find_outliers(cleaned_data, Age)
+ultimate_outcast_finder <- function(data, column) {
+mean_val <- mean(data$column, na.rm = TRUE)
+sd_val <- sd(data$column, na.rm = TRUE)
+lower_bound <- mean_val - 3 * sd_val
+upper_bound <- mean_val + 3 * sd_val
+outlier<- data$column < lower_bound | data$column > upper_bound
+return(outliers)
+}
+ultimate_outcast_finder(cleaned_data, Age)
+View(find_outliers)
+data <- read.csv2("data\\raw\\cardio_train_big.csv")
+ultimate_outcast_finder <- function(data, column) {
+mean_val <- mean(data$column, na.rm = TRUE)
+sd_val <- sd(data$column, na.rm = TRUE)
+lower_bound <- mean_val - 3 * sd_val
+upper_bound <- mean_val + 3 * sd_val
+outlier<- data$column < lower_bound | data$column > upper_bound
+return(outliers)
+}
+cleaned_data <- data %>%
+mutate(gender = if_else(gender==1, "Male", "Female")) %>%
+mutate(across(c(gender, cholesterol, gluc, smoke, active, cardio), ~ as.factor(.x))) %>%
+mutate(weight = as.numeric(weight)) %>% mutate(weight = round(weight,0)) %>%
+mutate(across(c(cholesterol, gluc), ~ factor(.x, levels = c(1,2,3), labels = c("normal", "above normal", "well above normal")))) %>%
+mutate(across(c(smoke, alco, active, cardio), ~ factor(.x, levels = c(0,1), labels = c("yes", "no")))) %>%
+mutate(age = age/365) %>% mutate(age = round(age,0)) %>%
+mutate(ap_hi = if_else(ap_hi < 0 & between(abs(ap_hi), 50, 250), abs(ap_hi), ap_hi)) %>%
+mutate(ap_lo = if_else(ap_lo < 0 & between(abs(ap_lo), 60, 90), abs(ap_lo), ap_lo)) %>%
+filter(height >= 140, weight >= 40, ap_hi >= 90 & ap_hi <= 150, ap_lo >= 60 & ap_lo <= 100) %>%
+rename(`Age` = `age`,
+`Height` = `height`,
+`Weight` = `weight`,
+`Gender` = `gender`,
+`Systolic blood pressure` = `ap_hi`,
+`Diastolic blood pressure` = `ap_lo`,
+`Cholesterol` = `cholesterol`,
+`Glucose` = `gluc`,
+`Smoking` = `smoke`,
+`Alcohol intake` = `alco`,
+`Physical activity` = `active`,
+`Presence or absence of cardiovascular disease` = `cardio`)
+ultimate_outcast_finder(cleaned_data, Age)
+ultimate_outcast_finder(cleaned_data, cleaned_data$Age)
+ultimate_outcast_finder(cleaned_data, Age)
+library(dplyr)
+library(readr)
+# Функция для определения выбросов по правилу трех сигм
+ultimate_outcast_finder <- function(data, column) {
+mean_val <- mean(data[[column]], na.rm = TRUE)
+sd_val <- sd(data[[column]], na.rm = TRUE)
+lower_bound <- mean_val - 3 * sd_val
+upper_bound <- mean_val + 3 * sd_val
+outlier <- data[[column]] < lower_bound | data[[column]] > upper_bound
+return(outlier)
+}
+# Пример данных
+data <- data.frame(
+age = c(50, 60, 40, 70, 30, 20, 80, 90),
+height = c(170, 180, 160, 190, 200, 150, 210, 220),
+weight = c(70, 80, 60, 90, 100, 50, 110, 120),
+gender = c(1, 2, 1, 2, 1, 2, 1, 2),
+ap_hi = c(120, 130, 140, 150, 160, 170, 180, 190),
+ap_lo = c(80, 90, 70, 100, 60, 110, 50, 120),
+cholesterol = c(1, 2, 3, 1, 2, 3, 1, 2),
+gluc = c(1, 2, 3, 1, 2, 3, 1, 2),
+smoke = c(0, 1, 0, 1, 0, 1, 0, 1),
+alco = c(0, 1, 0, 1, 0, 1, 0, 1),
+active = c(0, 1, 0, 1, 0, 1, 0, 1),
+cardio = c(0, 1, 0, 1, 0, 1, 0, 1)
+)
+# Очистка данных
+cleaned_data <- data %>%
+mutate(gender = if_else(gender == 1, "Male", "Female")) %>%
+mutate(across(c(gender, cholesterol, gluc, smoke, active, cardio), ~ as.factor(.x))) %>%
+mutate(weight = as.numeric(weight)) %>% mutate(weight = round(weight, 0)) %>%
+mutate(across(c(cholesterol, gluc), ~ factor(.x, levels = c(1, 2, 3), labels = c("normal", "above normal", "well above normal")))) %>%
+mutate(across(c(smoke, alco, active, cardio), ~ factor(.x, levels = c(0, 1), labels = c("yes", "no")))) %>%
+mutate(age = age / 365) %>% mutate(age = round(age, 0)) %>%
+mutate(ap_hi = if_else(ap_hi < 0 & between(abs(ap_hi), 50, 250), abs(ap_hi), ap_hi)) %>%
+mutate(ap_lo = if_else(ap_lo < 0 & between(abs(ap_lo), 60, 90), abs(ap_lo), ap_lo)) %>%
+filter(height >= 140, weight >= 40, ap_hi >= 90 & ap_hi <= 150, ap_lo >= 60 & ap_lo <= 100) %>%
+rename(`Age` = `age`,
+`Height` = `height`,
+`Weight` = `weight`,
+`Gender` = `gender`,
+`Systolic blood pressure` = `ap_hi`,
+`Diastolic blood pressure` = `ap_lo`,
+`Cholesterol` = `cholesterol`,
+`Glucose` = `gluc`,
+`Smoking` = `smoke`,
+`Alcohol intake` = `alco`,
+`Physical activity` = `active`,
+`Presence or absence of cardiovascular disease` = `cardio`)
+# Применение функции ко всем указанным столбцам
+outliers <- cleaned_data %>%
+mutate(across(c(Age, Height, Weight, `Systolic blood pressure`, `Diastolic blood pressure`, Cholesterol, Glucose, Smoking, `Alcohol intake`, `Physical activity`),
+~ ultimate_outcast_finder(cleaned_data, cur_column()), .names = "outlier_{col}"))
+data <- read.csv2("data\\raw\\cardio_train_big.csv")
+# Приводим данные в порядок, исправляем тип, переводим факторные переменные из строчных, переименовываем факторы, атрибуты, отфильтровываем аномалии
+cleaned_data <- data %>%
+mutate(gender = if_else(gender==1, "Male", "Female")) %>%
+mutate(across(c(gender, cholesterol, gluc, smoke, active, cardio), ~ as.factor(.x))) %>%
+mutate(weight = as.numeric(weight)) %>% mutate(weight = round(weight,0)) %>%
+mutate(across(c(cholesterol, gluc), ~ factor(.x, levels = c(1,2,3), labels = c("normal", "above normal", "well above normal")))) %>%
+mutate(across(c(smoke, alco, active, cardio), ~ factor(.x, levels = c(0,1), labels = c("yes", "no")))) %>%
+mutate(age = age/365) %>% mutate(age = round(age,0)) %>%
+mutate(ap_hi = if_else(ap_hi < 0 & between(abs(ap_hi), 50, 250), abs(ap_hi), ap_hi)) %>%
+mutate(ap_lo = if_else(ap_lo < 0 & between(abs(ap_lo), 60, 90), abs(ap_lo), ap_lo)) %>%
+filter(height >= 140, weight >= 40, ap_hi >= 90 & ap_hi <= 150, ap_lo >= 60 & ap_lo <= 100) %>%
+rename(`Age` = `age`,
+`Height` = `height`,
+`Weight` = `weight`,
+`Gender` = `gender`,
+`Systolic blood pressure` = `ap_hi`,
+`Diastolic blood pressure` = `ap_lo`,
+`Cholesterol` = `cholesterol`,
+`Glucose` = `gluc`,
+`Smoking` = `smoke`,
+`Alcohol intake` = `alco`,
+`Physical activity` = `active`,
+`Presence or absence of cardiovascular disease` = `cardio`)
+find_outliers <- function(column) {
+mean_val <- mean(column, na.rm = TRUE)
+sd_val <- sd(column, na.rm = TRUE)
+lower_bound <- mean_val - 3 * sd_val
+upper_bound <- mean_val + 3 * sd_val
+outliers <- column < lower_bound | column > upper_bound
+return(outliers)
+}
+numeric_columns <- c("Age", "Height", "Weight", "Systolic blood pressure", "Diastolic blood pressure")
+outliers <- cleaned_data %>%
+mutate(across(all_of(numeric_columns), ~ find_outliers(.), .names = "outlier_{col}"))
+outliers
+outliers
+numeric_columns
+outliers
+outliers <- cleaned_data %>%
+mutate(across(all_of(numeric_columns), ~ find_outliers(.), .names = "outlier_{col}"))
+cleaned_data %>%
+mutate(across(all_of(numeric_columns), ~ find_outliers(.), .names = "outlier_{col}"))
+outliers <- mutate(across(all_of(numeric_columns), ~ find_outliers(cleaned_data), .names = "outlier_{col}"))
+cleaned_data
+mutate(across(all_of(numeric_columns), ~ find_outliers(.), .names = "outlier_{col}")) %>%
+select("outlier_{col}")
+cleaned_data
+mutate(across(all_of(numeric_columns), ~ find_outliers(.), .names = "outlier_{col}")) %>%
+select(contains("outlier_"))
+cleaned_data
+mutate(across(all_of(numeric_columns), ~ find_outliers(.), .names = "outlier_{col}"))
+data <- read.csv2("data\\raw\\cardio_train_big.csv")
+cleaned_data <- data %>%
+mutate(gender = if_else(gender==1, "Male", "Female")) %>%
+mutate(across(c(gender, cholesterol, gluc, smoke, active, cardio), ~ as.factor(.x))) %>%
+mutate(weight = as.numeric(weight)) %>% mutate(weight = round(weight,0)) %>%
+mutate(across(c(cholesterol, gluc), ~ factor(.x, levels = c(1,2,3), labels = c("normal", "above normal", "well above normal")))) %>%
+mutate(across(c(smoke, alco, active, cardio), ~ factor(.x, levels = c(0,1), labels = c("yes", "no")))) %>%
+mutate(age = age/365) %>% mutate(age = round(age,0)) %>%
+mutate(ap_hi = if_else(ap_hi < 0 & between(abs(ap_hi), 50, 250), abs(ap_hi), ap_hi)) %>%
+mutate(ap_lo = if_else(ap_lo < 0 & between(abs(ap_lo), 60, 90), abs(ap_lo), ap_lo)) %>%
+filter(height >= 140, weight >= 40, ap_hi >= 90 & ap_hi <= 150, ap_lo >= 60 & ap_lo <= 100) %>%
+rename(`Age` = `age`,
+`Height` = `height`,
+`Weight` = `weight`,
+`Gender` = `gender`,
+`Systolic blood pressure` = `ap_hi`,
+`Diastolic blood pressure` = `ap_lo`,
+`Cholesterol` = `cholesterol`,
+`Glucose` = `gluc`,
+`Smoking` = `smoke`,
+`Alcohol intake` = `alco`,
+`Physical activity` = `active`,
+`Presence or absence of cardiovascular disease` = `cardio`)
+find_outliers <- function(column) {
+mean_val <- mean(column, na.rm = TRUE)
+sd_val <- sd(column, na.rm = TRUE)
+lower_bound <- mean_val - 3 * sd_val
+upper_bound <- mean_val + 3 * sd_val
+outliers <- column < lower_bound | column > upper_bound
+return(outliers)
+}
+numeric_columns <- c("Age", "Height", "Weight", "Systolic blood pressure", "Diastolic blood pressure")
+cleaned_data
+mutate(across(all_of(numeric_columns), ~ find_outliers(.), .names = "outlier_{col}")) %>%
+select(contains("outlier_"))
+cleaned_data
+mutate(across(all_of(numeric_columns), ~ find_outliers(.), .names = "outlier_{col}"))
+library(tidyverse)
+library(readxl)
+data <- read.csv2("data\\raw\\cardio_train_big.csv")
+cleaned_data <- data %>%
+mutate(gender = if_else(gender==1, "Male", "Female")) %>%
+mutate(across(c(gender, cholesterol, gluc, smoke, active, cardio), ~ as.factor(.x))) %>%
+mutate(weight = as.numeric(weight)) %>% mutate(weight = round(weight,0)) %>%
+mutate(across(c(cholesterol, gluc), ~ factor(.x, levels = c(1,2,3), labels = c("normal", "above normal", "well above normal")))) %>%
+mutate(across(c(smoke, alco, active, cardio), ~ factor(.x, levels = c(0,1), labels = c("yes", "no")))) %>%
+mutate(age = age/365) %>% mutate(age = round(age,0)) %>%
+mutate(ap_hi = if_else(ap_hi < 0 & between(abs(ap_hi), 50, 250), abs(ap_hi), ap_hi)) %>%
+mutate(ap_lo = if_else(ap_lo < 0 & between(abs(ap_lo), 60, 90), abs(ap_lo), ap_lo)) %>%
+filter(height >= 140, weight >= 40, ap_hi >= 90 & ap_hi <= 150, ap_lo >= 60 & ap_lo <= 100) %>%
+rename(`Age` = `age`,
+`Height` = `height`,
+`Weight` = `weight`,
+`Gender` = `gender`,
+`Systolic blood pressure` = `ap_hi`,
+`Diastolic blood pressure` = `ap_lo`,
+`Cholesterol` = `cholesterol`,
+`Glucose` = `gluc`,
+`Smoking` = `smoke`,
+`Alcohol intake` = `alco`,
+`Physical activity` = `active`,
+`Presence or absence of cardiovascular disease` = `cardio`)
+find_outliers <- function(column) {
+mean_val <- mean(column, na.rm = TRUE)
+sd_val <- sd(column, na.rm = TRUE)
+lower_bound <- mean_val - 3 * sd_val
+upper_bound <- mean_val + 3 * sd_val
+outliers <- column < lower_bound | column > upper_bound
+return(outliers)
+}
+numeric_columns <- c("Age", "Height", "Weight", "Systolic blood pressure", "Diastolic blood pressure")
+cleaned_data
+mutate(across(all_of(numeric_columns), ~ find_outliers(.), .names = "outlier_{col}")) %>%
+select(contains("outlier_"))
+cleaned_data
+mutate(across(all_of(numeric_columns), ~ find_outliers(.), .names = "outlier_{col}"))
+cleaned_data %>%
+mutate(across(all_of(numeric_columns), ~ find_outliers(.), .names = "outlier_{col}"))
+cleaned_data %>%
+mutate(across(all_of(numeric_columns), ~ find_outliers(.), .names = "outlier_{col}")) %>%
+select(contains("outlier_"))
+cleaned_data %>%
+mutate(across(all_of(numeric_columns), ~ find_outliers(.), .names = "outlier_{col}")) %>%
+select(id, ontains("outlier_"))
+cleaned_data %>%
+mutate(across(all_of(numeric_columns), ~ find_outliers(.), .names = "outlier_{col}")) %>%
+select(id, contains("outlier_"))
+outliers %>%
+rowwise() %>%
+if contains("outlier_") == TRUE {
+outliers<- outliers %>%
+filter(if_any(starts_with("outlier_"), ~ . == TRUE))
+outliers
+cleaned_data
+cleaned_data %>%
+arrange(desc(Age))
+write_csv(outliers, "outliers.csv")
+length(cleaned_data)
+nrow(cleaned_data)
+?nrow()
+cleaned_data
+ncol(cleaned_data)
+cleaned_data %>% duplicated()
+cleaned_data %>% rowwise() %>% duplicated()
+cleaned_data %>% filter(if_any(duplicated(), .==TRUE))
+cleaned_data %>% filter(if_any(duplicated(), ~ .==TRUE))
+cleaned_data %>% filter(if_any(duplicated(.), ~ .==TRUE))
+cleaned_data %>% filter(if_any(duplicated(.) == TRUE))
+cleaned_data %>% filter(duplicated(.) == TRUE)
+missing_values <- colSums(is.na(cleaned_data))
+missing_values_filtered <- missing_values[missing_values > 0]
+missing_value
+colSums(is.na(cleaned_data))
+missing_values[missing_values > 0]
+missing_value <- colSums(is.na(data))
+print(data)
+missing_values_filtered <- missing_values[data > 0]
+print(data_filtered)
+colSums(is.na(data))
+missing_values[data > 0]
+print(data)
+missing_values[data > 0]
+missing_value <- colSums(is.na(data))
+print(missing_value)
+missing_values_filtered <- missing_values[data > 0]
+print(missing_values_filtered)

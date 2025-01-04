@@ -1,7 +1,0 @@
-"0","data_join <- data %>% "
-"0","  transmute("
-"0","    STUDYID = as.character(STUDYID), "
-"0","    USUBJID = as.character(USUBJID),"
-"0","    TRTP = as.character(TRTP),"
-"0","    TRTPN = as.numeric(TRTPN) "
-"0","  )"

@@ -1,4 +1,0 @@
-"0","ggplot(hogwarts)+"
-"0","  geom_density(aes(x = result), fill = ""aquamarine"", colour =""black"", bins = 20)+"
-"0","  theme_bw()+"
-"0","  theme_custom"

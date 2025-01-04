@@ -1,0 +1,4 @@
+"0",""
+"0","cleaned_data %>% "
+"0","  "
+"0","  filter(Sex == ""Female"") "

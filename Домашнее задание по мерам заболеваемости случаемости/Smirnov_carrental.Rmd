@@ -1,0 +1,68 @@
+---
+title: "Smirnov_carrental"
+author: "Sergey"
+date: "`r Sys.Date()`"
+output: html_document
+---
+# Загрузка пакета и файла
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+data <- read.csv("/data/raw/carrental.csv")
+```
+
+# Проверка структуры данных
+```{r}
+head(data)
+```
+
+# 1. Распространенность опыта вождения (доля водителей с опытом вождения)
+```{r}
+experience_prevalence <- mean(data$experience) * 100
+cat("Распространенность опыта вождения:", experience_prevalence, "%\n")
+```
+
+# 2. Расчет риска ДТП (accident)
+# Общий риск ДТП
+```{r}
+overall_risk <- mean(data$accident) * 100
+cat("Общий риск ДТП:", overall_risk, "%\n")
+```
+
+# Риск ДТП в группе с опытом вождения
+```{r}
+risk_with_experience <- mean(data$accident[data$experience == 1]) * 100
+cat("Риск ДТП в группе с опытом:", risk_with_experience, "%\n")
+```
+
+# Риск ДТП в группе без опыта вождения
+```{r}
+risk_without_experience <- mean(data$accident[data$experience == 0]) * 100
+cat("Риск ДТП в группе без опыта:", risk_without_experience, "%\n")
+```
+
+# 3. Расчет плотности событий (incidence rate)
+# Добавление столбца с расчетом времени риска для каждого водителя
+```{r}
+data <- data %>% mutate(time_at_risk = stop - start + 1)
+```
+
+# Общая плотность событий
+```{r}
+overall_incidence_rate <- sum(data$accident) / sum(data$time_at_risk) * 1000  # На 1000 человеко-дней
+cat("Общая плотность событий:", overall_incidence_rate, "случаев на 1000 человеко-дней\n")
+```
+
+# Плотность событий в группе с опытом вождения
+```{r}
+incidence_rate_with_experience <- sum(data$accident[data$experience == 1]) / 
+  sum(data$time_at_risk[data$experience == 1]) * 1000
+cat("Плотность событий в группе с опытом:", incidence_rate_with_experience, "случаев на 1000 человеко-дней\n")
+```
+
+# Плотность событий в группе без опыта вождения
+```{r}
+incidence_rate_without_experience <- sum(data$accident[data$experience == 0]) / 
+  sum(data$time_at_risk[data$experience == 0]) * 1000
+cat("Плотность событий в группе без опыта:", incidence_rate_without_experience, "случаев на 1000 человеко-дней\n")
+```

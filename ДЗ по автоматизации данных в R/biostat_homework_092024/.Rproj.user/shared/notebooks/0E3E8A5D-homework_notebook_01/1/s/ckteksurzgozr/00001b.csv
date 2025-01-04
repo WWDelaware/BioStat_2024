@@ -1,0 +1,5 @@
+"0","data <- read.csv2(""data\\raw\\cardio_train_big.csv"")
+"
+"2","Предупреждение: не могу открыть файл 'data\raw\cardio_train_big.csv': No such file or directory"
+"2","Ошибка в file(file, ""rt"") : не могу открыть соединение
+"

@@ -1,0 +1,24 @@
+"0","hogwarts |>
+  select(id, house, bloodStatus, week_3) |>
+  filter(!is.na(week_3)) |>
+  ggplot(aes(x = reorder(house, -week_3), 
+             y = week_3))+
+  geom_boxplot(aes(fill = bloodStatus), notch = TRUE, linewidth = 0.1, width = 1)+
+   geom_jitter(shape = 16, position = position_jitter(0.15), alpha = 0.6, outliers = FALSE) +
+ labs(
+    title = ""Распределение баллов студентов за 3-ю неделю по факультетам"",
+    x = ""Факультет"",
+    y = ""Баллы за 3-ю неделю"",
+    fill = ""Происхождение"",
+  ) +
+  theme(
+    plot.title = element_text(size = 16, face = ""bold"", hjust = 0.5),  # Заголовок
+    axis.title.x = element_text(size = 14),  # Размер шрифта для оси X
+    axis.title.y = element_text(size = 14),  # Размер шрифта для оси Y
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Угол наклона подписи факультетов
+    plot.caption = element_text(hjust = 0, face = ""italic"", size = 12)  # Настройка подписи
+  )+
+  theme_bw()+
+  theme_custom
+"
+"2","Warning: [38;5;252mIgnoring unknown parameters: `outliers`[39m"

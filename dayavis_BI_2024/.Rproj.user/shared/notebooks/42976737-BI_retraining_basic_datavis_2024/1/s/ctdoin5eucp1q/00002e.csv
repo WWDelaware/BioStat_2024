@@ -1,7 +1,0 @@
-"0","ggplot(hogwarts)+"
-"0","  geom_bar(aes(x = fct_infreq(house),"
-"0","               fill = sex),"
-"0","           position = ""dodge2"","
-"0","           colour = ""black"")+"
-"0","  scale_x_discrete(name = ""house"")+"
-"0","  theme_bw()"

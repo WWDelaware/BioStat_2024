@@ -1,0 +1,17 @@
+"0","ggplot()+"
+"0","  geom_line(data = students10ForWeeks, "
+"0","            aes(x = week, "
+"0","                y = points, "
+"0","                group = id),"
+"0","            colour = ""grey"")+"
+"0","  geom_line(students10ForWeeks |> filter(id == 10), "
+"0","            aes(x = week,"
+"0","                y = points,"
+"0","                group = id))+"
+"0","  theme_bw()+"
+"0","  theme_custom"
+"1","[1m[33mError[39m in `geom_line()`:[22m
+[38;5;252m[33m![38;5;252m `mapping` must be created by `aes()`.[39m
+Backtrace:
+[90m 1. [39m[1m[94mggplot2::geom_line([39m[22m...[1m[94m)[39m[22m
+"

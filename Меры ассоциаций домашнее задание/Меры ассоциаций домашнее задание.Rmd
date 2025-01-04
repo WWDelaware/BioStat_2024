@@ -1,0 +1,75 @@
+---
+title: "Меры ассоциаций домашнее задание"
+author: "Sergey"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r read data & import packages}
+library(tidyverse)
+library(dplyr)
+library(readxl)
+data <- read.csv("data/raw/diabetes.csv")
+data1 <- read.csv("data/raw/pneumonia.csv")
+glimpse(data)
+summary(data)
+str(data)
+glimpse(data1)
+summary(data1)
+str(data1)
+```
+
+```{r Task 1}
+data$ИМТ <- factor(data$ИМТ, levels = c("Нормальный", "Высокий"))
+data$Диабет <- factor(data$Диабет, levels = c("Нет", "Есть"))
+table <- table(data$ИМТ, data$Диабет)
+risk_A <- table["Высокий", "Есть"] / sum(table["Высокий", ])
+risk_B <- table["Нормальный", "Есть"] / sum(table["Нормальный", ])
+RR <- risk_A / risk_B
+RD <- risk_A - risk_B
+cat("Отношение рисков (RR):", RR, "\n")
+cat("Разница рисков (RD):", RD, "\n")
+chi_sq <- chisq.test(table)
+print(chi_sq)
+
+if(chi_sq$p.value < 0.05){
+ cat("Нулевая гипотеза отвергается. Есть статистически значимая ассоциация между ИМТ и
+диабетом.\n")
+} else {
+ cat("Нулевая гипотеза не отвергается. Нет статистически значимой ассоциации между ИМТ и
+диабетом.\n")
+}
+```
+
+```{r Task 2}
+data1$`Группа` <- as.factor(data1$`Группа`)
+data1$`Торговый.центр` <- as.factor(data1$`Торговый.центр`)
+data1$`Ресторан` <- as.factor(data1$`Ресторан`)
+data1$`Общественные.мероприятия` <- as.factor(data1$`Общественные.мероприятия`)
+calculate_OR <- function(data, place) {
+  table <- table(data$Группа, data[[place]])
+  OR <- (table[1,2] * table[2,1]) / (table[1,1] * table[2,2])
+  return(OR)
+  }
+OR_mall <- calculate_OR(data1, "Торговый.центр")
+OR_restaurant <- calculate_OR(data1, "Ресторан")
+OR_event <- calculate_OR(data1, "Общественные.мероприятия")
+cat("Отношение шансов для торгового центра:", OR_mall, "\n")
+cat("Отношение шансов для ресторана:", OR_restaurant, "\n")
+cat("Отношение шансов для общественных мероприятий:", OR_event, "\n")
+results <- data.frame(
+  Место = c("Торговый центр", "Ресторан", "Общественные мероприятия"),
+  OR = c(OR_mall, OR_restaurant, OR_event))
+library(ggplot2)
+ggplot(results, aes(x = Место, y = OR, fill = Место)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Отношение шансов для различных мест посещения",
+       x = "Место посещения",
+       y = "Отношение шансов (OR)") +
+  theme_minimal()
+```
+Следовательно, набольший риск заразиться соответствует торговому центру

@@ -1,0 +1,9 @@
+"0","data %>% "
+"0","  select('Группа крови', 'Рост')"
+"1","[1m[33mError[39m in `select()`:[22m
+[33m![39m Can't select columns that don't exist.
+[31m✖[39m Column `Группа крови` doesn't exist.
+Backtrace:
+[90m 1. [39mdata %>% select(""Группа крови"", ""Рост"")
+[90m 3. [39m[1m[94mdplyr:::select.data.frame([39m[22m., ""Группа крови"", ""Рост""[1m[94m)[39m[22m
+"

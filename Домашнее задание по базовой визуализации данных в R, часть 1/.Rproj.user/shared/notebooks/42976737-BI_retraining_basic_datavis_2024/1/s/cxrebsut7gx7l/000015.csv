@@ -1,0 +1,7 @@
+"0","hogwarts |> "
+"0","  select(id, `Transfiguration exam`, `Potions exam`, `Charms exam`) |>"
+"0","  pivot_longer(!id, names_to = ""exam"", values_to = ""mark"") |>"
+"0","  ggplot()+"
+"0","  geom_boxplot(aes(x = exam, y = mark))+"
+"0","  theme_bw()+"
+"0","  theme_custom"

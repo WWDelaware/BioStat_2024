@@ -1,0 +1,162 @@
+---
+title: "Домашнее задание по базовой визуализации данных в R 1."
+author: "Sergey"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+```
+
+# Загрузка датасета и первичная обработка
+
+```{r dataloading}
+hogwarts <- read_csv("data/hogwarts_2024.csv")
+hogwarts |> head()
+hogwarts |> glimpse()
+# поменяем тип некотрых данных
+hogwarts <- hogwarts |> mutate(
+  across(c(house, course, sex, wandCore, bloodStatus), ~ as.factor(.x))
+)
+hogwarts |> summary()
+```
+# Стобчатые диаграммы
+## Задание 1
+Постройте барплот (столбчатую диаграмму), отражающую распределение числа студентов по курсу обучения. Примените любую из встроенных тем ggplot. Раскрасьте столбики любым понравившимся вам цветом (можно использовать как словесные обозначения, так и гекскоды). Добавьте цветконтура столбиков.
+```{r course, echo=FALSE}
+ggplot(hogwarts)+
+  geom_bar(aes(x = course), fill = "blue",
+           colour = "black")+ 
+  theme_bw()
+```
+## Задание 2
+Создайте новый барплот, отражающий распределение числа студентов по факультету. Добавьте на график вторую факторную переменную – происхождение (bloodStatus). Модифицируйте при помощи аргумента position графика так, чтобы каждый столбец показывал распределение факультета по чистоте крови в долях. Примените произвольную тему.Запишите текстом в rmd-документе, какой вывод можно сделать из графика?
+```{r house and blood status}
+ggplot(hogwarts)+
+  geom_bar(aes(x = fct_infreq(house),
+               fill = bloodStatus),
+           position = "fill",
+           colour = "black")+
+  scale_x_discrete(name = "house")+
+  theme_bw()
+?geom_bar()
+```
+По графику можно сделать вывод, что наибольшая доля полукровок от общего числа студентов приходится на Слизерин и Когтевран. Наибольшая доля маглорождённых от общего числа студентов факультета - на факультете Гриффиндор. Наибольшая доля чистокровных волшебников на факультетах Слизерин и Гриффиндор, причем на последнем эта доля немног больше. Доли студентов, прихододящиеся на каждую из категорий по статусу крови, примерно равны на Пуффендуе и Когтевране.
+
+## Задание 3
+Модифицируйте датасет таким образом, чтобы в нем остались только чистокровные (pure-blood) и маглорожденные студенты (muggle-born). Создайте на основе этих данных график из пункта 2. Добавьте горизонтальную пунктирную линию произвольного цвета на уровне 50%.Дайте осям название на русском языке
+```{r remove half blood and mutate dataset}
+hogwarts1 <- subset(hogwarts, bloodStatus == c("pure-blood", "muggle-born"))
+ggplot(hogwarts1)+
+  geom_bar(aes(x = fct_infreq(house),
+               fill = bloodStatus),
+           position = "fill",
+           colour = "black")+
+  scale_x_discrete(name = "Факультет")+
+  ylab("Доли")+
+  geom_abline(slope=0, intercept=0.5,  col = "green",lty=210) +
+  scale_fill_discrete(name = "Происхождение", labels=c('Маглорождённые', 'Чистокровные'))+
+  theme_bw()
+?geom_bar()
+```
+#Боксплоты
+##Задание 1
+Отобразите распределение баллов, заработанных студентами на 3-й неделе обучения, по факультетам. Отсортируйте факультеты в порядке убывания медианного балла за 3-ю неделю (мы не останавливались на этом в лекции, но упомянутая в ней функция по умолчанию сортирует именно по медиане, так что в этом случае дополнительных аргументов передавать не следует).
+```{r boxplot reordering week 3 score}
+ggplot(hogwarts)+
+  geom_boxplot(aes(y = week_3, x = reorder(house, week_3, .desc = TRUE)))
+  theme_bw()+
+  theme_custom
+```
+## Задание 2
+Добавьте отображение разными цветами для происхождения студентов (bloodStatus). Добавьте на боксплот вырезку (notch). Настройте для данного чанка размер изображения 14:14 дюймов. Приведите названия осей к корректному виду.
+```{r bloodstatus and notch}
+hogwarts |>
+  filter(!is.na(week_3)) |>
+  ggplot(aes(x = reorder(house, -week_3), 
+             y = week_3))+
+  geom_boxplot(aes(fill = bloodStatus), notch = TRUE)+
+  xlab("Факультет")+
+  ylab("3 неделя")+
+  scale_fill_discrete(name = "Происхождение", labels=c('Полукровки', 'Маглорождённые', 'Чистокровные'))+
+  theme_bw()+
+  theme_custom
+options(repr.plot.width = 14, repr.plot.height = 14)
+```
+## Задание 3
+Добавьте на график джиттер-плот. Удалите отображение выбросов у боксплота. Видоизмените по своему вкусу толщину линий и ширину боксплота.
+```{r jitter plot}
+hogwarts |>
+  select(id, house, bloodStatus, week_3) |>
+  filter(!is.na(week_3)) |>
+  ggplot(aes(x = reorder(house, -week_3), 
+             y = week_3))+
+  geom_boxplot(aes(fill = bloodStatus), notch = TRUE, linewidth = 0.1, width = 1)+
+   geom_jitter(shape = 16, position = position_jitter(0.15), alpha = 0.6, outliers = FALSE) +
+ labs(
+    title = "Распределение баллов студентов за 3-ю неделю по факультетам",
+    x = "Факультет",
+    y = "Баллы за 3-ю неделю",
+    fill = "Происхождение",
+  ) +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),  # Заголовок
+    axis.title.x = element_text(size = 14),  # Размер шрифта для оси X
+    axis.title.y = element_text(size = 14),  # Размер шрифта для оси Y
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Угол наклона подписи факультетов
+    plot.caption = element_text(hjust = 0, face = "italic", size = 12)  # Настройка подписи
+  )+
+  theme_bw()+
+  theme_custom
+options(repr.plot.width = 14, repr.plot.height = 14)
+```
+#Разное
+## Задание 1
+Постройте “леденцовый график” (lollipop-plot) для количества набранных студентами 5-го курса баллов за весь учебный год (по оси ординат – id студента, по оси абсцисс – итоговый балл). Отсортируйте студентов в порядке убывания итогового балла. Раскрасьте точки на “леденцах” в зависимости от сердцевины волшебной палочки. Палочки с сердечной жилой дракона должны быть красного цвета, с пером феникса – желтого, сволосом единорога – серого.
+```{r lollipop plot}
+hogwarts |>
+  filter(course == "5") |>
+  arrange(desc(result)) |>
+  ggplot()+
+  geom_segment(aes(x = reorder(result, -id), xend = reorder(result, -id), y =0, yend = id))+
+  geom_point(aes(x = reorder(result, -id), y = id, colour = factor(wandCore)), size = 3, )+
+  labs(x = "Набранные баллы", y = "id")+
+  scale_color_manual(values = c("dragon heartstring" = "red", 
+                                "phoenix feather" = "yellow", 
+                                "unicorn hair" = "gray")) +
+  labs(x = "Набранные баллы", y = "ID студента",
+       title = "Леденцовый график студентов 5-го курса")+
+  theme(axis.text.x = element_text(face = "bold", color = "black", size = 10, angle = 45, hjust = 1)) +
+  theme(aspect.ratio = 1/100) +
+  theme_bw()
+
+hogwarts |>
+  filter(course == "5") |>
+  arrange(desc(result)) |>
+  ggplot() +
+  # Create the segment from 0 to the student's result
+  geom_segment(aes(x = 0, xend = result, y = reorder(id, result), yend = reorder(id, result)), color = "black") +
+  # Add points (lollipop heads)
+  geom_point(aes(x = result, y = reorder(id, result), colour = factor(wandCore)), size = 3) +
+  scale_color_manual(values = c("dragon heartstring" = "red", 
+                                "phoenix feather" = "yellow", 
+                                "unicorn hair" = "gray")) +
+  labs(x = "Набранные баллы", y = "ID студента",
+       title = "Леденцовый график студентов 5-го курса") +
+  # Improve x-axis label readability
+  theme(axis.text.x = element_text(face = "bold", color = "black", size = 10, angle = 45, hjust = 1)) +
+  theme(aspect.ratio = 1/100) +
+  theme_bw()
+```
+## Задание 2
+Постройте гистограмму распредления баллов за экзамен по астрономии.Выделите цветом факультет Слизерин. Примените 18-й кегль к тексту на осях x, y и легенды. Название оси y и легенды запишите 20-м кеглем, оси x – 22-м. Измените название оси y на “Number of students”.
+```{r}
+ggplot(hogwarts)+
+  geom_histogram(aes(x = result), fill = "aquamarine", colour ="black", bins = 20)+
+  theme_bw()+
+  theme_custom
+```
+

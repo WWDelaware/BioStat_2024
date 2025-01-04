@@ -1,0 +1,5 @@
+"0","lm(`Plasma beta-carotene (ng/ml)` ~ ., model_data)
+"
+"2","Ошибка в eval(predvars, data, env) : 
+  объект 'Plasma beta-carotene (ng/ml)' не найден
+"
