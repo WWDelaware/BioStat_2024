@@ -1,0 +1,299 @@
+---
+title: "Нежелательные явления при лечении болезни Крона"
+author: "Sergey"
+date: "2024-11-03"
+output: html_document
+---
+
+```{r setup & load packages, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(psych)
+library(ggpubr)
+library(ggridges)
+data <- read.csv("CrohnD.csv")
+```
+
+# Описательная статистика
+
+```{r }
+summary_stats <- data %>%
+  group_by(treat) %>%
+  summarise(
+    n = n(),
+    mean_nrAdvE = mean(nrAdvE),
+    sd_nrAdvE = sd(nrAdvE),
+    median_nrAdvE = median(nrAdvE),
+    min_nrAdvE = min(nrAdvE),
+    max_nrAdvE = max(nrAdvE),
+    se_nrAdvE = sd(nrAdvE) / sqrt(n()),
+    lower_ci = mean_nrAdvE - qt(0.975, n() - 1) * se_nrAdvE,
+    upper_ci = mean_nrAdvE + qt(0.975, n() - 1) * se_nrAdvE
+  )
+
+data
+summary(data)
+
+```
+
+## Including Plots
+
+# Приводим к уму-разуму датасет
+
+```{r pressure, echo=FALSE}
+data <- data %>% 
+  mutate(across(c(country, sex, treat), ~ as.factor(.x)))
+summary(data)
+str(data)
+
+data <- data %>% 
+  mutate(BMI_cat = cut(BMI, breaks = c(-Inf, 18.5, 24.9, 29.9, Inf), labels = c("Underweight", "Normal", "Overweight", "Obese")))
+
+Underweight <- data[data$BMI_cat == "Underweight",]
+write.csv(Underweight, "Underweight.csv")
+```
+# Визуализация 
+## Визуализация часть 1
+Визуализировать распределения значений признаков средствами ggplot2 и сопутствующих пакетов.
+
+```{r, fig.height=20, fig.width=20}
+# Распределение признаков
+theme_custom <- theme(plot.title = element_text(size = 18, hjust = 0.5),
+        axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title = element_text(size = 18),
+        strip.text = element_text(size = 15))
+        
+# Распределение количества нежелательных явлений (НЯ)
+nrAdvE <- ggplot(data, aes(x = nrAdvE)) +
+    geom_histogram(binwidth = 1, fill = "blue", color = "black") +
+  labs(title = "Распределение количества нежелательных явлений (НЯ)",
+       x = "Количество НЯ",
+       y = "Частота") +
+  theme_custom
+
+# Распределение пациентов по полу
+pie_data <- data %>%
+  group_by(sex) %>%
+  summarise(count = n()) %>%
+  mutate(prop = count / sum(count) * 100) %>%
+  arrange(desc(sex)) %>%
+  mutate(ypos = cumsum(prop) - 0.5 * prop)
+    
+sex <- ggplot(pie_data, aes(x = "", y = prop, fill = sex)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(y = ypos, label = paste0(round(prop), "%")), color = "white", size = 10) +
+  labs(title = "Распределение пациентов по полу") +
+  theme_void() +
+  theme_custom
+
+# Распределение пациентов по странам
+pie_data <- data %>%
+  group_by(country) %>%
+  summarise(count = n()) %>%
+  mutate(prop = count / sum(count) * 100) %>%
+  arrange(desc(country)) %>%
+  mutate(ypos = cumsum(prop) - 0.5 * prop)
+
+country <- ggplot(pie_data, aes(x = "", y = prop, fill = country)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(y = ypos, label = paste0(round(prop), "%")), color = "white", size = 10) +
+  labs(title = "Распределение пациентов по странам") +
+  theme_void() +
+  theme_custom
+
+# Распределение возраста пациентов
+age <- ggplot(data, aes(x = age)) +
+  geom_histogram(binwidth = 5, fill = "green", color = "black") +
+  labs(title = "Распределение возраста пациентов",
+       x = "Возраст",
+       y = "Частота") +
+  theme_custom
+
+# Распределение веса пациентов
+weight <- ggplot(data, aes(x = weight)) +
+  geom_histogram(binwidth = 5, fill = "red", color = "black") +
+  labs(title = "Распределение веса пациентов",
+       x = "Вес",
+       y = "Частота") +
+  facet_wrap(~ sex , ncol = 1) +
+  theme_custom
+
+# Распределение роста пациентов
+height <- ggplot(data, aes(x = height)) +
+  geom_histogram(binwidth = 5, fill = "purple", color = "black") +
+  labs(title = "Распределение роста пациентов",
+       x = "Рост",
+       y = "Частота") +
+  theme_custom
+
+# Распределение пациентов по BMI
+bmi <- ggplot(data, aes(x = BMI_cat, fill = BMI_cat)) +
+  geom_bar() +
+  labs(title = "Распределение пациентов по категориям BMI",
+       x = "Категория BMI",
+       y = "Число",
+       fill = "Категория BMI") +
+  theme_minimal() +
+  theme_custom
+
+ggarrange(nrAdvE, bmi, height, country, sex, age, weight)
+  
+```
+
+## Визуализация часть 2 
+Подобрать и реализовать средства для визуальной оценки взаимосвязи между числом НЯ и собранными признаками пациентов.
+### Распределение количества нежелательных явлений (НЯ) по группам лечения
+
+```{r, fig.height=10, fig.width=10}
+ggplot(data, aes(x = factor(nrAdvE), fill = factor(nrAdvE))) +
+  geom_bar(color = "black") +
+  facet_wrap(~ treat , ncol = 1) +
+  labs(title = "Распределение количества нежелательных явлений (НЯ) по группам лечения",
+       x = "Количество НЯ",
+       y = "Частота") +
+  theme_minimal() +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 18, hjust = 0.5),
+        axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title = element_text(size = 18),
+        strip.text = element_text(size = 15))
+```
+
+### Распределение количества нежелательных явлений (НЯ) по полу
+
+```{r, fig.height=10, fig.width=10}
+
+ggplot(data, aes(x = nrAdvE, y = sex, fill = sex)) +
+  geom_density_ridges(alpha = 0.5, quantile_lines = TRUE)+
+  labs(title = "Распределение количества нежелательных явлений (НЯ) по полу", x = "Количество НЯ", y = "Распределение") +
+  theme_minimal() +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 18, hjust = 0.5),
+        axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title = element_text(size = 18),
+        strip.text = element_text(size = 15))
+```
+
+### Связь между количеством нежелательных явлений (НЯ) и индексом массы тела (BMI)
+
+```{r, fig.height=10, fig.width=10}
+#Скаттерплот зависимости BMI от количества НЯ
+ggplot(data, aes(x = nrAdvE, y = BMI, color = treat)) +
+  geom_point(size = 3) +
+  labs(title = "Связь между количеством нежелательных явлений (НЯ) и индексом массы тела (BMI)",
+       x = "Количество НЯ",
+       y = "Индекс массы тела (BMI)",
+       color = "Группа лечения") +
+  theme_minimal() +
+  geom_smooth(method = "lm")+
+  facet_wrap(~treat, ncol = 1)
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+### Связь между количеством нежелательных явлений (НЯ) и индексом массы тела (BMI)
+
+```{r, fig.height=10, fig.width=10}
+ggplot(data, aes(x = nrAdvE, y = BMI, color = treat)) +
+  stat_summary(fun.data = mean_cl_normal, geom = "pointrange", size = 1) +
+  labs(title = "Связь между количеством нежелательных явлений (НЯ) и индексом массы тела (BMI)",
+       x = "Количество НЯ",
+       y = "Индекс массы тела (BMI)",
+       color = "Группа лечения") +
+  facet_wrap(~treat, ncol = 1)+
+  geom_smooth(method = "lm")+
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title = element_text(size = 16),
+        strip.text = element_text(size = 15))
+```
+
+### Распределение количества нежелательных явлений (НЯ) по BMI
+
+```{r, fig.height=10, fig.width=10}
+count_data <- data %>%
+  group_by(BMI_cat) %>%
+  summarise(count = n()) %>% 
+  filter(BMI_cat != "Underweight")
+
+data %>% filter(BMI_cat != "Underweight") %>% 
+  ggplot(aes(x = nrAdvE, y = BMI_cat, fill = BMI_cat)) +
+  facet_wrap(~treat, ncol = 1)+
+  geom_density_ridges(alpha = 0.5, quantile_lines = TRUE)+
+  geom_text(data = count_data, aes(x = max(data$nrAdvE), y = BMI_cat, label = count, color = BMI_cat), hjust = 29, vjust = 0.5, size = 5) +
+  labs(title = "Распределение количества нежелательных явлений (НЯ) по BMI", x = "Число НЯ", y = "Индекс массы тела по категориям") +
+  theme_minimal() +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 18, hjust = 0.5),
+        axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title = element_text(size = 18),
+        strip.text = element_text(size = 15))
+```
+
+### Распределение логарифмированного количества нежелательных явлений (НЯ) по категориям BMI
+
+```{r, fig.height=10, fig.width=10}
+data %>% filter(BMI_cat != "Underweight") %>% 
+  ggplot(aes(x =BMI_cat, y = log(nrAdvE), fill = BMI_cat))+
+  geom_boxplot()+
+  facet_wrap(~treat, ncol = 1)+
+  labs(title = "Распределение логарифмированного количества нежелательных явлений (НЯ) по категориям BMI", x = "Категория BMI", y = "Лог Ня") +
+  theme(legend.position = "none")
+```
+
+### Количество нежелательных явлений (НЯ) по группам терапии
+
+```{r, fig.height=10, fig.width=10}
+data %>% filter(BMI_cat != "Underweight") %>% 
+  ggplot(aes(x = log(nrAdvE), fill = BMI_cat))+
+  geom_histogram(position = "dodge2", bins = 10)+
+  facet_wrap(~treat, ncol = 1)+
+  labs(title = "Количество нежелательных явлений (НЯ) по группам терапии", x = "Лог Количество", y = "Число нежелательных явлений") +
+  theme(plot.title = element_text(size = 18, hjust = 0.5))
+```
+```{r, fig.height=10, fig.width=10}
+data %>% filter(BMI_cat != "Underweight") %>% 
+  ggplot(aes(x = nrAdvE, fill = BMI_cat))+
+  geom_histogram(position = "dodge2", bins = 10)+
+  facet_wrap(~treat, ncol = 1)+
+  labs(title = "Количество нежелательных явлений (НЯ) по группам терапии", x = "Количество", y = "Число нежелательных явлений") +
+  theme(plot.title = element_text(size = 18, hjust = 0.5))
+```
+
+### Сравнение колличества нежелательных эффектов в группах пдацебо
+ВЗЯТО У КАТЕРИНЫ
+```{r, fig.height=10, fig.width=10}
+boxplot(nrAdvE ~ treat, data = data, 
+        xlab = "Группа лечения", ylab = "Колличество нежелательных эффектов",
+        main = "Сравнение колличества нежелательных эффектов в \n группах пдацебо, терапия 1 и терапия 2")
+```
+
+### Визуализация BMI в скаттерплоте (наверное, не надо)
+
+```{r}
+ggplot(data, aes(x = ID, y = BMI))+
+  geom_point()+
+  geom_smooth(method = "lm")
+```
+
+
+# Свирепое мясо сравнения моделей (не надо)
+```{r}
+model <- glm(nrAdvE ~ treat + BMI + height + country + sex + age, data = data, family = poisson)
+summary(model)
+
+model_full <- lm(nrAdvE ~ treat + BMI + height + country + sex + age, data = data)
+model_null <- lm(nrAdvE ~ 1, data = data)
+
+step(object = model_full, scope = list(lower = model_null, upper = model_full), direction = "backward")
+model_optimal <- glm(nrAdvE ~ BMI + height + country + sex, data = data)
+anova(model_full, model_optimal)
+```
+
+
