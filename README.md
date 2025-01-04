@@ -1,4 +1,4 @@
-# Project Name
+# Biostatistics 2024
 
 Welcome to my project repository! This project is part of my studies and personal development in the field of biostatistics.
 
