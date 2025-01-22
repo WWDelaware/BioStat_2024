@@ -1,0 +1,454 @@
+---
+title: "Регрессия"
+author: "Sergey"
+date: "2025-01-19"
+output: html_document
+---
+# Домашнее задание по регрессионному анализу
+
+**Гликированный гемоглобин (HbA1c)** — это показатель, отражающий средний уровень глюкозы в крови за последние 2–3 месяца. Чем выше HbA1c, тем выше риск развития осложнений сахарного диабета.
+
+**Физическая активность (ФА)**, согласно многим исследованиям, может способствовать снижению уровня глюкозы в крови и, следовательно, уменьшению уровня HbA1c. Однако, чтобы правильно выделить именно причинно-следственную связь, необходимо корректировать влияние различных ковариат, которые могут выступать в роли конфаундеров, медиаторов или коллайдеров (согласно анализу DAG — направленного ациклического графа).
+
+Ниже мы пошагово рассмотрим:
+
+1. Как сформировать показатель физической активности из имеющихся переменных.
+2. Какие ковариаты (демографические или клинические) включить в модель регрессии.
+3. Как проверить, действительно ли физическая активность связана с более низким уровнем HbA1c (путём регрессионного анализа).
+4. Как интерпретировать полученные результаты (точечные и интервальные оценки, проверку статистических гипотез и клиническую значимость).
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+# Подгрузка библиотек
+library(tidyverse)
+library(readxl)
+library(dagitty)
+library(lmtest)
+library(car)
+library(pls)
+library(broom)
+library(corrplot)
+library(ggplot2)
+library(gridExtra)
+library(MatchIt)
+```
+
+## Импорт данных и data preprocessing (Шаги 1–2)
+
+1) Загружаем Excel-файл HW_data.xlsx, переводим в факторы нужные столбцы (пол, образование, курение и т.д.), проверяем пропуски.
+2) Создаём новую переменную total_pa (total physical activity), суммируя, к примеру, время разных типов физической активности.
+
+### Загрузка данных
+
+```{r load, include=FALSE}
+data_raw <- read_excel("data/raw/HW_data.xlsx")
+```
+
+### Препроцессинг данных
+
+```{r view, echo=FALSE}
+# Преобразуем часть переменных в факторы, проверяем пропуски, приводим к нужным форматам
+
+data <- data_raw %>%
+  # Пример: факторизация пола (RIAGENDR), если 1 = "Male", 2 = "Female"
+  mutate(
+    RIAGENDR = factor(RIAGENDR,
+                      levels = c(1, 2),
+                      labels = c("Male", "Female")),
+    # Пример: факторизация статуса курения (SMQ020), если 1 = "Yes", 2 = "No"
+    # Обратите внимание, что в исходном NHANES часто бывает наоборот;
+    # обязательно сверяйтесь с кодировкой в codebook!
+    SMQ020   = factor(SMQ020,
+                      levels = c(2, 1),
+                      labels = c("No", "Yes")),
+    # Пример: образование
+    DMDEDUC2 = factor(DMDEDUC2,
+                      levels = c(1,2,3,4,5),
+                      labels = c("<9th grade","9-11th grade","HS Grad/GED",
+                                 "Some College","College Grad"))
+  ) %>%
+  # Пример: рассчитываем суммарную физическую активность
+  # (если такие столбцы есть в данных: PAD615, PAD630, PAD645, PAD660, PAD675 и т.п.)
+  mutate(
+    total_pa = rowSums(
+      select(., starts_with("PAD6")),
+      na.rm = TRUE
+    )
+  )
+
+# Проверка пропусков
+cat("Проверка пропущенных значений:\n")
+print(colSums(is.na(data)))
+
+# Структура данных (выборочно для ключевых переменных)
+cat("\nСтруктура (частичная) данных:\n")
+str(data %>% select(LBXGH, total_pa, RIDAGEYR, RIAGENDR, DMDEDUC2, SMQ020, BMXBMI))
+
+```
+
+## Эксплораторный анализ (EDA, Шаг 3)
+
+1) Считаем описательные статистики (минимум, максимум, медиану, среднее, SD и т.д.).
+2) Строим гистограммы для первичной оценки распределений.
+3) Смотрим таблицы частот для категориальных переменных.
+
+```{r, echo=FALSE}
+# 3.1. Описательная статистика для числовых переменных
+numeric_vars <- data %>%
+  select(where(is.numeric)) %>%
+  names()
+
+summary_numeric <- data %>%
+  select(all_of(numeric_vars)) %>%
+  summary()
+
+cat("\nОписательная статистика для численных переменных:\n")
+print(summary_numeric)
+
+# 3.2. Описательная статистика для категориальных переменных
+cat_vars <- data %>%
+  select(where(is.factor)) %>%
+  names()
+
+cat("\nЧастоты категориальных переменных:\n")
+for(var in cat_vars) {
+  cat("\n", var, ":\n", sep = "")
+  print(table(data[[var]], useNA = "ifany"))
+}
+
+# 3.3. Простая визуализация распределений
+# Гистограммы основных численных переменных
+plots_numeric <- map(numeric_vars, ~
+  ggplot(data, aes_string(.x)) +
+    geom_histogram(bins = 30, fill = "steelblue", alpha = 0.7) +
+    theme_minimal() +
+    labs(title = paste("Распределение", .x)) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+          axis.text.y = element_text(size = 8))
+)
+# Выводим в несколько колонок (при большом числе переменных разбейте на несколько вызовов)
+num_plots_per_page <- 6  # Количество графиков на одной странице
+for (i in seq(1, length(plots_numeric), by = num_plots_per_page)) {
+  do.call(grid.arrange, c(plots_numeric[i:min(i + num_plots_per_page - 1, length(plots_numeric))], ncol = 2))
+}
+
+```
+
+## Корреляционный анализ (Шаг 4)
+
+Строим матрицу корреляций cor(), визуализируем corrplot.
+При необходимости проверяем корреляцию между ключевыми признаками, например, total_pa и LBXGH.
+
+```{r, echo=FALSE, fig.height=10, fig.width=12}
+# Для численных переменных построим матрицу корреляций
+# (HbA1c в данных — это LBXGH, далее будем использовать именно её)
+cor_matrix <- cor(
+  data %>% select(all_of(numeric_vars)),
+  use = "complete.obs"
+)
+
+# Визуализация корреляций
+corrplot(cor_matrix, method = "number", type = "upper",
+         tl.cex = 0.7,         # Уменьшение размера шрифта меток
+         number.cex = 0.7,     # Уменьшение размеров чисел корреляции
+         tl.srt = 45,          # Поворот подписей для удобства
+         tl.offset = 1,        # Добавление отступа для меток
+         mar = c(0, 0, 3, 0))  # Увеличение верхнего отступа
+mtext("Корреляционная матрица численных переменных", side = 3, line = 2, cex = 1.2, font = 2)
+
+# Пример: проверка корреляции физ. активности и HbA1c
+test_cor_pa_hba1c <- cor.test(data$total_pa, data$LBXGH)
+cat("\nКорреляция между total_pa и HbA1c (LBXGH): r =",
+    round(test_cor_pa_hba1c$estimate, 3),
+    ", p-value =", test_cor_pa_hba1c$p.value, "\n")
+```
+
+## Анализ DAG-диаграммы
+
+```{r, echo = FALSE}
+# Пример синтаксиса DAGitty 
+dag_model <- dagitty('
+dag {
+bb="0,0,1,1"
+"Blood pressure" [pos="0.489,0.460"]
+"Body mass index (BMI)" [pos="0.490,0.174"]
+"Diabetic medication" [pos="0.548,0.540"]
+"Family income" [pos="0.163,0.324"]
+"Glycated hemoglobin (HbA1c)" [outcome,pos="0.548,0.327"]
+"Marital status" [pos="0.161,0.238"]
+"Physical activity" [exposure,pos="0.334,0.287"]
+Age [pos="0.229,0.509"]
+Comorbidities [pos="0.354,0.542"]
+Education [pos="0.254,0.170"]
+Race [pos="0.361,0.172"]
+Sex [pos="0.311,0.460"]
+Smoking [pos="0.196,0.397"]
+"Body mass index (BMI)" -> "Blood pressure"
+"Body mass index (BMI)" -> "Glycated hemoglobin (HbA1c)"
+"Family income" -> "Physical activity"
+"Family income" -> Smoking
+"Glycated hemoglobin (HbA1c)" -> "Blood pressure"
+"Glycated hemoglobin (HbA1c)" -> "Diabetic medication"
+"Marital status" -> "Physical activity"
+"Physical activity" -> "Blood pressure"
+"Physical activity" -> "Body mass index (BMI)"
+"Physical activity" -> "Glycated hemoglobin (HbA1c)"
+Age -> "Blood pressure"
+Age -> "Physical activity"
+Age -> Comorbidities
+Comorbidities -> "Blood pressure"
+Comorbidities -> "Diabetic medication"
+Comorbidities -> "Glycated hemoglobin (HbA1c)"
+Comorbidities -> "Physical activity"
+Education -> "Family income"
+Education -> "Physical activity"
+Education -> Smoking
+Race -> "Family income"
+Race -> "Glycated hemoglobin (HbA1c)"
+Race -> "Physical activity"
+Race -> Education
+Sex -> "Blood pressure"
+Sex -> "Glycated hemoglobin (HbA1c)"
+Sex -> "Physical activity"
+Sex -> Smoking
+Smoking -> "Blood pressure"
+Smoking -> "Glycated hemoglobin (HbA1c)"
+Smoking -> Comorbidities
+}
+')
+
+# Визуализируем DAG 
+plot(dag_model)
+
+# Получаем наборы для корректировки (минимальные)
+adjust_sets <- adjustmentSets(dag_model, type = "minimal")
+cat("\nМинимальные наборы для корректировки (DAGitty):\n")
+print(adjust_sets)
+```
+
+## 6. Построение регрессионных моделей и вычисление информационных характеристик
+
+```{r, echo=FALSE}
+# 6.1. Модель без ковариат (простой линейный регрессор)
+model_unadjusted <- lm(LBXGH ~ total_pa, data = data)
+
+# 6.2. Модель с ковариатами (например, Age, Sex, BMI, Smoking, Income, Education)
+# ВАЖНО: подставляйте реальные названия столбцов из вашего датасета
+model_adjusted <- lm(LBXGH ~ total_pa + RIDAGEYR + RIAGENDR + BMXBMI +
+                     SMQ020 + DMDEDUC2 + INDFMIN2,
+                     data = data)
+
+# 6.3. Модель с полиномиальными эффектами (пример)
+model_poly <- lm(LBXGH ~ total_pa + poly(RIDAGEYR, 2) + RIAGENDR +
+                 poly(BMXBMI, 2) + SMQ020 + DMDEDUC2 + INDFMIN2,
+                 data = data)
+
+# 6.4. PLS-модель (Partial Least Squares) для регрессии
+# (Часто PLS используют, когда предикторов очень много.
+#  Здесь – только демонстрация.)
+model_pls <- plsr(LBXGH ~ total_pa + RIDAGEYR + RIAGENDR + BMXBMI +
+                           SMQ020 + DMDEDUC2 + INDFMIN2,
+                  data = data,
+                  validation = "CV")  # кросс-валидация
+```
+
+# 7. Сравнение моделей по информационным критериям
+
+```{r, echo=FALSE}
+# Создадим функцию-обёртку, извлекающую метрики
+extract_model_metrics <- function(model_obj) {
+  # Если это PLS (класс "mvr"), сравниваем по минимальному RMSEP
+  if(inherits(model_obj, "mvr")) {
+    # Возьмём число компонент, дающих минимум RMSEP
+    comps <- which.min(model_obj$validation$PRESS)
+    rmsep_val <- RMSEP(model_obj)$val[comps]
+    # Для R2 возьмём максимальное R2
+    r2_val <- R2(model_obj, estimate = "train", intercept = FALSE)$val[comps]
+    return(
+      data.frame(
+        Model = "PLS",
+        AIC = NA,
+        BIC = NA,
+        R2 = r2_val,
+        RMSE = rmsep_val
+      )
+    )
+  } else {
+    # Обычная линейная модель
+    return(
+      data.frame(
+        Model = deparse(model_obj$call),
+        AIC = AIC(model_obj),
+        BIC = BIC(model_obj),
+        R2  = summary(model_obj)$r.squared,
+        RMSE = sigma(model_obj)
+      )
+    )
+  }
+}
+
+# Применим к списку моделей
+all_models <- list(
+  Unadjusted = model_unadjusted,
+  Adjusted   = model_adjusted,
+  Poly       = model_poly,
+  PLS        = model_pls
+)
+
+metrics_df <- map_df(all_models, extract_model_metrics, .id = "Label")
+cat("\nСравнение информационных критериев:\n")
+print(metrics_df %>% arrange(AIC))
+
+# Добавим простую «логику принятия решений» по AIC:
+best_aic <- min(metrics_df$AIC, na.rm = TRUE)  # минимальный AIC
+best_model_row <- metrics_df %>%
+  filter(AIC == best_aic)
+cat("\nЛучшая модель по AIC:", best_model_row$Label, "\n")
+
+if(nrow(best_model_row) > 1) {
+  cat("Есть несколько моделей с одинаковым (или очень близким) AIC.\n",
+      "Возможно, стоит учесть BIC или другие критерии.\n")
+} else {
+  cat("AIC для лучшей модели =", best_model_row$AIC, "\n")
+}
+```
+
+## 8 Диагностика выбранной модели
+
+```{r, echo = FALSE}
+# Допустим, что мы выбрали модель "Adjusted" как основную.
+# Проверим графики диагн. (остатки, QQ-plot и т.п.)
+
+par(mfrow = c(2,2))
+plot(model_adjusted)
+par(mfrow = c(1,1))
+
+# Проверим мультиколлинеарность
+vif_adjusted <- vif(model_adjusted)
+cat("\nVIF для модели с ковариатами:\n")
+print(vif_adjusted)
+
+# Тест Бройша — Пагана на гетероскедастичность:
+bp_test_adjusted <- bptest(model_adjusted)
+cat("\nТест Бройша-Пагана:\n")
+print(bp_test_adjusted)
+
+if(bp_test_adjusted$p.value < 0.05){
+  cat("Вывод: есть признаки гетероскедастичности, возможно, требуется робастная оценка.\n")
+} else {
+  cat("Вывод: не обнаружено серьёзных признаков гетероскедастичности.\n")
+}
+```
+
+## 9. Оценка результатов и проверка гипотез
+
+```{r, echo=FALSE}
+# 9.1. Вывод коэффициента при total_pa (эффект ФА)
+coef_adj <- tidy(model_adjusted, conf.int = TRUE) %>%
+  filter(term == "total_pa")
+
+cat("\nЭффект физической активности (total_pa) в модели с ковариатами:\n")
+print(coef_adj)
+
+# 9.2. Формулируем гипотезу:
+#   H0: β(total_pa) = 0 (нет связи между ФА и HbA1c)
+#   H1: β(total_pa) != 0
+# p-value:
+p_value_fa <- coef_adj$p.value
+alpha <- 0.05
+
+# Логика принятия решения (if-else):
+if(p_value_fa < alpha){
+  cat("p =", p_value_fa, "<", alpha, " => отвергаем H0, физ. активность ассоциирована с HbA1c.\n")
+} else {
+  cat("p =", p_value_fa, ">=", alpha, " => нет оснований отвергнуть H0, связь не статистически значима.\n")
+}
+
+# 9.3. Проверка на клиническую значимость (пример, если значимым считается сдвиг >= 0.5% HbA1c)
+# Коэффициент показывает, на сколько (в среднем) меняется HbA1c при увеличении ФА на 1 условную единицу total_pa.
+effect_size <- coef_adj$estimate
+if(abs(effect_size) >= 0.5) {
+  cat("Изменение >= 0.5% HbA1c => можно считать клинически значимым.\n")
+} else {
+  cat("Изменение < 0.5% => эффект, вероятно, незначим клинически.\n")
+}
+```
+
+## 10. Анализ взаимодействия (пол — модификатор)
+
+```{r, echo=FALSE}
+model_interaction <- lm(LBXGH ~ total_pa*RIAGENDR + RIDAGEYR + BMXBMI + SMQ020,
+                        data = data)
+summary_interaction <- summary(model_interaction)
+cat("\nМодель с взаимодействием (пол):\n")
+print(summary_interaction)
+
+# Коэффициент взаимодействия: total_pa:RIAGENDRFemale
+int_term <- tidy(model_interaction) %>%
+  filter(term == "total_pa:RIAGENDRFemale")
+
+p_int <- int_term$p.value
+if(p_int < 0.05) {
+  cat("p =", p_int, "< 0.05 => пол является модификатором эффекта ФА.\n")
+} else {
+  cat("p =", p_int, ">= 0.05 => нет статистически значимого взаимодействия.\n")
+}
+```
+
+## 11 PSM, ATT и т.д.
+
+```{r, echo = FALSE}
+# Для наглядности: Propensity Score Matching (PSM) при бинариизации total_pa
+# (только как демонстрация, если нужна оценка ATT и т.п.)
+# Допустим, что мы решим разделить total_pa на 0 (низкая активность) и 1 (высокая)
+# Это очень условный пример, на реальных данных - другое пороговое значение.
+data_prep <- data %>%
+  mutate(
+    pa_binary = if_else(total_pa > median(total_pa, na.rm=TRUE), 1, 0)
+  )
+
+# Модель логистической регрессии для PS
+ps_model <- glm(pa_binary ~ RIDAGEYR + RIAGENDR + BMXBMI, data = data_prep,
+                family = binomial)
+
+# Матчинг (nearest)
+match_obj <- matchit(pa_binary ~ RIDAGEYR + RIAGENDR + BMXBMI,
+                     data = data_prep, method = "nearest")
+matched_data <- match.data(match_obj)
+
+# Оценка ATT
+model_att <- lm(LBXGH ~ pa_binary, data = matched_data)
+summary_att <- tidy(model_att, conf.int = TRUE)
+cat("\nATT (разница HbA1c между группами низкой/высокой ФА после матчинга):\n")
+print(summary_att)
+```
+
+## 12. Заключение
+
+Основные выводы:
+
+```{r, echo = FALSE}
+cat("Основные выводы:\n")
+cat("1. По результатам сравнения информационных критериев лучшей (по AIC) оказалась модель:\n")
+cat("   -", best_model_row$Label, "\n")
+cat("   -", best_model_row$Model, "\n")
+cat("2. Гипотеза об отсутствии ассоциации между ФА и HbA1c (H0: β=0) была",
+    if(p_value_fa<alpha) "отвергнута" else "не отвергнута",
+    "(p-value =", p_value_fa, ").\n")
+cat("3. Проверка взаимодействия с полом показала, что",
+    if(p_int<0.05) "есть" else "нет",
+    "статистически значимой модификации эффекта.\n")
+cat("4. Клиническая значимость эффекта: при коэффициенте ~",
+    round(effect_size,3),
+    "и принятом пороге 0.5% -",
+    if(abs(effect_size)>=0.5) "достигается" else "не достигается",
+    ".\n")
+```
+
+---------------------------------------------------------------------------------
+Основные выводы:
+1. По результатам сравнения информационных критериев лучшей (по AIC) оказалась модель:
+   - Adjusted Adjusted 
+2. Гипотеза об отсутствии ассоциации между ФА и HbA1c (H0: β=0) была не отвергнута (p-value = 0.2290029 ).
+3. Проверка взаимодействия с полом показала, что нет статистически значимой модификации эффекта.
+4. Клиническая значимость эффекта: при коэффициенте ~ 0 и принятом пороге 0.5% - не достигается .
