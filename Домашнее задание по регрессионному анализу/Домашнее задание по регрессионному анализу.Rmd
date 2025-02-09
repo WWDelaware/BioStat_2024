@@ -184,7 +184,7 @@ vigorous-intensity work
 Возьмём первый набор корректировок: Age, Comorbidities, Education, Family income, Race, Sex, Smoking являются конфаундерам и должны быть скорректированы (включены в модель регрессии вместе с показателем физической активности). Для каждой из представленных конфаундеров будем использовать следующие переменные (исходя из HW_codebook.xlsx):
 
 1) Age (Возраст) - RIDAGEYR - Age in years at screening;
-2) Comorbidities (Сопутсвующие заболевания) - категориальная переменная, которая принимает значение 1, если любая из переменных (из раздела questionnaire):
+2) Comorbidities (Сопутсвующие заболевания) - категориальная переменная, которая принимает значение yes, если любая из переменных (из раздела questionnaire):
 MCQ010 (Ever been told you have asthma),
 MCQ035 (Have asthma),
 MCQ160c (Ever told you had coronary heart disease),
@@ -196,7 +196,7 @@ MCQ160o (Ever told you had COPD?),
 MCQ220 (Ever told you had cancer or malignancy),
 BPQ020 (Ever told you had high blood pressure),
 DIQ010 (Doctor told you have diabetes)
-имеет значение 1 (Yes), и принимает 2, если все указанные переменные имеют значение 2 (No). Переменные типа DIQ070 (Take diabetic pills to lower blood sugar) не учитываются, так как ответ на них будет явлется следствием уже включённое переменной;
+имеет значение 1 (Yes), и принимает no, если все указанные переменные имеют значение 2 (No). Переменные типа DIQ070 (Take diabetic pills to lower blood sugar) не учитываются, так как ответ на них будет явлется следствием уже включённое переменной;
 3) Education (Уровень образования) - DMDEDUC2 - Education level - Adults 20+ (5 уровней);
 4) Family income (Годовой доход семьи) - будем использовать переменную INDFMIN2 (INDFMIN2 - Annual family income);
 5) Race (Раса) - RIDRETH3 - Race/Hispanic origin w/ NH Asian;
